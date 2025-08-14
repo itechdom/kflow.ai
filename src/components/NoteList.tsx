@@ -10,7 +10,7 @@ interface NoteListProps {
   onEditNote: (note: Note) => void;
   onAddChildNote: (parentNote: Note) => void;
   onCreateNote: () => void;
-  onNavigateToNote?: (note: Note) => void;
+  onNavigateToNote: (note: Note) => void;
 }
 
 const NoteList: React.FC<NoteListProps> = ({
@@ -23,7 +23,6 @@ const NoteList: React.FC<NoteListProps> = ({
   onCreateNote,
   onNavigateToNote
 }) => {
-  console.log("Notes",notes);
   const [expandedNotes, setExpandedNotes] = useState<Set<string>>(new Set());
 
   const createNewNote = () => {
@@ -67,7 +66,23 @@ const NoteList: React.FC<NoteListProps> = ({
     return notesWithChildren.filter(note => !note.parentId);
   };
 
-    const renderNoteItem = (note: Note) => {
+  const handleNoteSelect = (note: Note) => {
+    onSelectNote(note);
+  };
+
+  const handleNoteDelete = (noteId: string) => {
+    onDeleteNote(noteId);
+  };
+
+  const handleNoteEdit = (note: Note) => {
+    onEditNote(note);
+  };
+
+  const handleNoteView = (note: Note) => {
+    onNavigateToNote(note);
+  };
+
+  const renderNoteItem = (note: Note) => {
     const hasChildren = note.children && note.children.length > 0;
     const isExpanded = expandedNotes.has(note.id);
     const childNotes = getChildNotes(note.id);
@@ -117,51 +132,38 @@ const NoteList: React.FC<NoteListProps> = ({
           </div>
         </div>
         
-                 <div className="note-actions">
-           <button
-             className="action-btn add-child-btn"
-             onClick={(e) => {
-               e.stopPropagation();
-               createChildNote(note);
-             }}
-             title="Add child note"
-           >
-             <Plus size={14} />
-           </button>
-           {onNavigateToNote && (
-             <button
-               className="action-btn view-btn"
-               onClick={(e) => {
-                 e.stopPropagation();
-                 onNavigateToNote(note);
-               }}
-               title="View note page"
-             >
-               <Eye size={14} />
-             </button>
-           )}
-           <button
-             className="action-btn edit-btn"
-             onClick={(e) => {
-               e.stopPropagation();
-               onSelectNote(note);
-               onEditNote(note);
-             }}
-             title="Edit note"
-           >
-             <Edit size={14} />
-           </button>
-           <button
-             className="action-btn delete-btn"
-             onClick={(e) => {
-               e.stopPropagation();
-               onDeleteNote(note.id);
-             }}
-             title="Delete note"
-           >
-             <Trash2 size={14} />
-           </button>
-         </div>
+        <div className="note-actions">
+          <button
+            className="action-btn add-child-btn"
+            onClick={(e) => {
+              e.stopPropagation();
+              createChildNote(note);
+            }}
+            title="Add child note"
+          >
+            <Plus size={14} />
+          </button>
+          <button
+            className="action-btn edit-btn"
+            onClick={(e) => {
+              e.stopPropagation();
+              handleNoteEdit(note);
+            }}
+            title="Edit note"
+          >
+            <Edit size={14} />
+          </button>
+          <button
+            className="action-btn delete-btn"
+            onClick={(e) => {
+              e.stopPropagation();
+              handleNoteDelete(note.id);
+            }}
+            title="Delete note"
+          >
+            <Trash2 size={14} />
+          </button>
+        </div>
         
         {hasChildren && isExpanded && (
           <div className="child-notes">

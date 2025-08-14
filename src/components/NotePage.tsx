@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useAppSelector, useAppDispatch } from '../store/hooks';
+import { selectNote, deleteNote, addChildNote, createNote, editNote } from '../store/noteSlice';
 import { Note } from '../types/Note';
 import NoteList from './NoteList';
 import MindMap from './MindMap';
@@ -7,55 +9,31 @@ import NoteEditor from './NoteEditor';
 import SearchBar from './SearchBar';
 import { ArrowLeft, List, Map } from 'lucide-react';
 
-interface NotePageProps {
-  notes: Note[];
-  selectedNote: Note | null;
-  onSelectNote: (note: Note) => void;
-  onDeleteNote: (noteId: string) => void;
-  onEditNote: () => void;
-  onAddChildNote: (parentNote: Note) => void;
-  onCreateNote: () => void;
-  onUpdateNote: (note: Note) => void;
-}
-
-const NotePage: React.FC<NotePageProps> = ({
-  notes,
-  selectedNote,
-  onSelectNote,
-  onDeleteNote,
-  onEditNote,
-  onAddChildNote,
-  onCreateNote,
-  onUpdateNote
-}) => {
+const NotePage: React.FC = () => {
   const { noteId } = useParams<{ noteId: string }>();
   const navigate = useNavigate();
+  const dispatch = useAppDispatch();
   const [viewMode, setViewMode] = useState<'list' | 'mindmap'>('list');
   const [searchQuery, setSearchQuery] = useState('');
-  const [isEditing, setIsEditing] = useState(false);
+  
+  // Get state from Redux
+  const { notes, selectedNote } = useAppSelector(state => state.notes);
 
   // Find the current note
   const currentNote = notes.find(note => note.id === noteId);
-  
+   
   // Filter notes based on search query
   const filteredNotes = notes.filter(note =>
     note.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
     note.content.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  // Sync editing state when selectedNote changes and auto-select current note if none selected
+  // Auto-select current note if none selected
   useEffect(() => {
     if (currentNote && !selectedNote) {
-      // If no note is selected, automatically select the current note
-      onSelectNote(currentNote);
-    } else if (currentNote && selectedNote && selectedNote.id === currentNote.id) {
-      // If the current note is selected, allow editing
-      setIsEditing(true);
-    } else if (currentNote && selectedNote && selectedNote.id !== currentNote.id) {
-      // If a different note is selected, don't edit the current note
-      setIsEditing(false);
+      dispatch(selectNote(currentNote));
     }
-  }, [selectedNote, currentNote, onSelectNote]);
+  }, [currentNote, selectedNote, dispatch]);
 
   if (!currentNote) {
     return (
@@ -83,35 +61,8 @@ const NotePage: React.FC<NotePageProps> = ({
     );
   }
 
-  const handleEditNote = (note: Note) => {
-    setIsEditing(true);
-    // Select the note for editing
-    onSelectNote(note);
-  };
-
-  const handleToggleEdit = () => {
-    if (isEditing) {
-      // If currently editing, exit edit mode
-      setIsEditing(false);
-    } else {
-      // If not editing, enter edit mode
-      setIsEditing(true);
-      onSelectNote(currentNote);
-    }
-  };
-
   const handleSaveNote = (updatedNote: Note) => {
-    onUpdateNote(updatedNote);
-    setIsEditing(false);
-    // If we were editing the current note, update the currentNote reference
-    if (updatedNote.id === currentNote.id) {
-      // The currentNote will be updated through the onUpdateNote callback
-      // which updates the global notes state
-    }
-  };
-
-  const handleCancelEdit = () => {
-    setIsEditing(false);
+    dispatch(editNote(updatedNote));
   };
 
   const handleNoteClick = (note: Note) => {
@@ -119,11 +70,43 @@ const NotePage: React.FC<NotePageProps> = ({
   };
 
   const handleNoteSelect = (note: Note) => {
-    onSelectNote(note);
-    // If selecting a different note, set editing to false
-    if (note.id !== currentNote.id) {
-      setIsEditing(false);
+    dispatch(selectNote(note));
+  };
+
+  const handleDeleteNote = (noteId: string) => {
+    dispatch(deleteNote(noteId));
+    // If we deleted the current note, navigate back to home
+    if (noteId === currentNote.id) {
+      navigate('/');
     }
+  };
+
+  const handleAddChildNote = (parentNote: Note) => {
+    dispatch(addChildNote(parentNote));
+  };
+
+  const handleCreateNote = () => {
+    const newNote = {
+      title: 'New Note',
+      content: '',
+      tags: [],
+      parentId: undefined,
+      children: [],
+      level: 0
+    };
+    dispatch(createNote(newNote));
+  };
+
+  const handleGenerateNote = (generatedNote: Note) => {
+    // Update the current note with AI-generated content
+    const updatedNote = {
+      ...currentNote,
+      title: generatedNote.title,
+      content: generatedNote.content,
+      tags: generatedNote.tags,
+      updatedAt: new Date()
+    };
+    dispatch(editNote(updatedNote));
   };
 
   return (
@@ -137,23 +120,19 @@ const NotePage: React.FC<NotePageProps> = ({
           Back to All Notes
         </button>
         
-                 <div className="note-page-title">
-           <h1 
-             className="clickable-title"
-             onClick={() => handleNoteSelect(currentNote)}
-             title="Click to edit this note"
-           >
-             {currentNote.title}
-           </h1>
-           <div className="note-meta">
-             <span className="note-level-badge">Level {currentNote.level}</span>
-             {currentNote.parentId && (
-               <span className="parent-note-info">
-                 Parent: {notes.find(n => n.id === currentNote.parentId)?.title || 'Unknown'}
-               </span>
-             )}
-           </div>
-         </div>
+        <div className="note-page-title">
+          <h1 className="note-title">
+            {currentNote.title}
+          </h1>
+          <div className="note-meta">
+            <span className="note-level-badge">Level {currentNote.level}</span>
+            {currentNote.parentId && (
+              <span className="parent-note-info">
+                Parent: {notes.find(n => n.id === currentNote.parentId)?.title || 'Unknown'}
+              </span>
+            )}
+          </div>
+        </div>
 
         <div className="view-toggle">
           <button
@@ -180,28 +159,29 @@ const NotePage: React.FC<NotePageProps> = ({
             onSearchChange={setSearchQuery} 
           />
           
-                     {viewMode === 'mindmap' ? (
-             <MindMap
-               notes={filteredNotes}
-               selectedNote={selectedNote}
-               onSelectNote={handleNoteSelect}
-               onDeleteNote={onDeleteNote}
-               onEditNote={handleEditNote}
-               onCreateNote={onCreateNote}
-               onAddChildNote={onAddChildNote}
-             />
-           ) : (
-             <NoteList 
-               notes={filteredNotes}
-               selectedNote={selectedNote}
-               onDeleteNote={onDeleteNote}
-               onEditNote={handleEditNote}
-               onAddChildNote={onAddChildNote}
-               onCreateNote={onCreateNote}
-               onSelectNote={handleNoteSelect}
-               onNavigateToNote={handleNoteClick}
-             />
-           )}
+          {viewMode === 'mindmap' ? (
+            <MindMap
+              notes={filteredNotes}
+              selectedNote={selectedNote}
+              onSelectNote={handleNoteSelect}
+              onDeleteNote={handleDeleteNote}
+              onEditNote={handleNoteClick}
+              onCreateNote={handleCreateNote}
+              onAddChildNote={handleAddChildNote}
+              onNavigateToNote={handleNoteClick}
+            />
+          ) : (
+            <NoteList 
+              notes={filteredNotes}
+              selectedNote={selectedNote}
+              onDeleteNote={handleDeleteNote}
+              onEditNote={handleNoteClick}
+              onAddChildNote={handleAddChildNote}
+              onCreateNote={handleCreateNote}
+              onSelectNote={handleNoteSelect}
+              onNavigateToNote={handleNoteClick}
+            />
+          )}
         </div>
         
         <div className="content">
@@ -209,10 +189,7 @@ const NotePage: React.FC<NotePageProps> = ({
             note={selectedNote || currentNote}
             notes={notes}
             onSave={handleSaveNote}
-            onCancel={handleCancelEdit}
-            isEditing={isEditing}
-            onEditNote={handleToggleEdit}
-            onGenerateNote={onCreateNote}
+            onGenerateNote={handleGenerateNote}
           />
         </div>
       </div>

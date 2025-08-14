@@ -1,37 +1,19 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAppSelector, useAppDispatch } from '../store/hooks';
+import { selectNote, deleteNote, addChildNote, createNote, setSearchQuery } from '../store/noteSlice';
 import NoteList from './NoteList';
 import MindMap from './MindMap';
 import SearchBar from './SearchBar';
 import { Note } from '../types/Note';
 
-interface HomePageProps {
-  notes: Note[];
-  selectedNote: Note | null;
-  onSelectNote: (note: Note) => void;
-  onDeleteNote: (noteId: string) => void;
-  onEditNote: () => void;
-  onAddChildNote: (parentNote: Note) => void;
-  onCreateNote: () => void;
-  onUpdateNote: (note: Note) => void;
-  searchQuery: string;
-  onSearchChange: (query: string) => void;
-}
-
-const HomePage: React.FC<HomePageProps> = ({
-  notes,
-  selectedNote,
-  onSelectNote,
-  onDeleteNote,
-  onEditNote,
-  onAddChildNote,
-  onCreateNote,
-  onUpdateNote,
-  searchQuery,
-  onSearchChange
-}) => {
+const HomePage: React.FC = () => {
   const navigate = useNavigate();
+  const dispatch = useAppDispatch();
   const [viewMode, setViewMode] = useState<'mindmap' | 'list'>('list');
+  
+  // Get state from Redux
+  const { notes, selectedNote, searchQuery } = useAppSelector(state => state.notes);
 
   const filteredNotes = notes.filter(note =>
     note.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -40,9 +22,42 @@ const HomePage: React.FC<HomePageProps> = ({
 
   const handleNoteClick = (note: Note) => {
     // First select the note to ensure it's properly set in state
-    onSelectNote(note);
+    dispatch(selectNote(note));
     // Then navigate to the note page
     navigate(`/note/${note.id}`);
+  };
+
+  const handleSelectNote = (note: Note) => {
+    dispatch(selectNote(note));
+  };
+
+  const handleDeleteNote = (noteId: string) => {
+    dispatch(deleteNote(noteId));
+  };
+
+  const handleAddChildNote = (parentNote: Note) => {
+    dispatch(addChildNote(parentNote));
+  };
+
+  const handleCreateNote = () => {
+    const newNote = {
+      title: 'New Note',
+      content: '',
+      tags: [],
+      parentId: undefined,
+      children: [],
+      level: 0
+    };
+    dispatch(createNote(newNote));
+  };
+
+  const handleSearchChange = (query: string) => {
+    dispatch(setSearchQuery(query));
+  };
+
+  const handleEditNote = (note: Note) => {
+    // When edit button is clicked, navigate to the note page
+    handleNoteClick(note);
   };
 
   return (
@@ -55,7 +70,7 @@ const HomePage: React.FC<HomePageProps> = ({
       <main className="App-main">
         <div className="full-width-content">
           <div className="view-toggle">
-          <button
+            <button
               className={`toggle-btn ${viewMode === 'list' ? 'active' : ''}`}
               onClick={() => setViewMode('list')}
             >
@@ -71,36 +86,28 @@ const HomePage: React.FC<HomePageProps> = ({
           
           <SearchBar 
             searchQuery={searchQuery} 
-            onSearchChange={onSearchChange} 
+            onSearchChange={handleSearchChange} 
           />          
           {viewMode === 'mindmap' ? (
             <MindMap
               notes={filteredNotes}
               selectedNote={selectedNote}
-              onSelectNote={onSelectNote}
-              onDeleteNote={onDeleteNote}
-              onEditNote={(note) => {
-                // When edit button is clicked, select the note and navigate to its page
-                onSelectNote(note);
-                handleNoteClick(note);
-              }}
-              onCreateNote={onCreateNote}
-              onAddChildNote={onAddChildNote}
+              onSelectNote={handleSelectNote}
+              onDeleteNote={handleDeleteNote}
+              onEditNote={handleEditNote}
+              onCreateNote={handleCreateNote}
+              onAddChildNote={handleAddChildNote}
               onNavigateToNote={handleNoteClick}
             />
           ) : (
             <NoteList 
               notes={filteredNotes}
               selectedNote={selectedNote}
-              onSelectNote={onSelectNote}
-              onDeleteNote={onDeleteNote}
-              onEditNote={(note) => {
-                // When edit button is clicked, select the note and navigate to its page
-                onSelectNote(note);
-                handleNoteClick(note);
-              }}
-              onAddChildNote={onAddChildNote}
-              onCreateNote={onCreateNote}
+              onSelectNote={handleSelectNote}
+              onDeleteNote={handleDeleteNote}
+              onEditNote={handleEditNote}
+              onAddChildNote={handleAddChildNote}
+              onCreateNote={handleCreateNote}
               onNavigateToNote={handleNoteClick}
             />
           )}

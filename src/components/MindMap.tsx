@@ -10,7 +10,7 @@ interface MindMapProps {
   onEditNote: (note: Note) => void;
   onCreateNote: () => void;
   onAddChildNote: (parentNote: Note) => void;
-  onNavigateToNote?: (note: Note) => void;
+  onNavigateToNote: (note: Note) => void;
 }
 
 interface TreeNode {

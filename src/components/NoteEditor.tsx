@@ -1,235 +1,210 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Note } from '../types/Note';
-import { Save, X, Edit, Sparkles } from 'lucide-react';
 import AIGenerator from './AIGenerator';
+import { Save, Tag, Plus, X } from 'lucide-react';
 
 interface NoteEditorProps {
   note: Note;
   notes: Note[];
-  onSave: (note: Note) => void;
-  onCancel: () => void;
-  isEditing: boolean;
-  onEditNote?: () => void;
-  onGenerateNote?: (note: Note) => void;
+  onSave: (updatedNote: Note) => void;
+  onGenerateNote: (note: Note) => void;
 }
 
 const NoteEditor: React.FC<NoteEditorProps> = ({
   note,
   notes,
   onSave,
-  onCancel,
-  isEditing,
-  onEditNote,
   onGenerateNote
 }) => {
-  const [editedNote, setEditedNote] = useState<Note>(note);
   const [title, setTitle] = useState(note.title);
   const [content, setContent] = useState(note.content);
-  const [tags, setTags] = useState<string[]>(note.tags || []);
+  const [tags, setTags] = useState<string[]>(note.tags);
   const [newTag, setNewTag] = useState('');
+  const [isSaving, setIsSaving] = useState(false);
+  const [lastSaved, setLastSaved] = useState<Date>(new Date());
 
+  // Debounced save function
+  const debouncedSave = useCallback(
+    debounce((updatedNote: Note) => {
+      setIsSaving(true);
+      onSave(updatedNote);
+      setLastSaved(new Date());
+      setIsSaving(false);
+    }, 1000), // Save after 1 second of inactivity
+    [onSave]
+  );
+
+  // Auto-save when title, content, or tags change
   useEffect(() => {
-    setEditedNote(note);
+    if (note.id) {
+      const updatedNote = {
+        ...note,
+        title,
+        content,
+        tags,
+        updatedAt: new Date()
+      };
+      debouncedSave(updatedNote);
+    }
+  }, [title, content, tags, note.id, debouncedSave]);
+
+  // Update local state when note prop changes
+  useEffect(() => {
     setTitle(note.title);
     setContent(note.content);
-  }, [note]);
+    setTags(note.tags);
+  }, [note.id, note.title, note.content, note.tags]);
 
-  const handleSave = () => {
-    const updatedNote: Note = {
-      ...editedNote,
-      title: title.trim() || 'Untitled Note',
-      content: content.trim(),
-      tags: tags,
-      updatedAt: new Date()
-    };
-    onSave(updatedNote);
+  const handleTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setTitle(e.target.value);
   };
 
-  const addTag = () => {
+  const handleContentChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setContent(e.target.value);
+  };
+
+  const handleAddTag = () => {
     if (newTag.trim() && !tags.includes(newTag.trim())) {
-      setTags([...tags, newTag.trim()]);
+      const updatedTags = [...tags, newTag.trim()];
+      setTags(updatedTags);
       setNewTag('');
     }
   };
 
-  const removeTag = (tagToRemove: string) => {
+  const handleRemoveTag = (tagToRemove: string) => {
     setTags(tags.filter(tag => tag !== tagToRemove));
   };
 
-  const handleTagKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
-      addTag();
+      handleAddTag();
     }
   };
 
-  const getNotePath = (note: Note): Note[] => {
-    const path: Note[] = [];
-    let currentNoteId: string | undefined = note.id;
+  const getNotePath = (currentNoteId: string): string[] => {
+    const path: string[] = [];
+    let currentNote = notes.find(n => n.id === currentNoteId);
     
-    while (currentNoteId) {
-      const currentNote = notes.find(n => n.id === currentNoteId);
-      if (currentNote) {
-        path.unshift(currentNote);
-        currentNoteId = currentNote.parentId;
-      } else {
+    if (!currentNote) {
+      return path;
+    }
+    
+    // Build the path from current note up to root
+    for (let note = currentNote; note; ) {
+      path.unshift(note.title);
+      
+      if (!note.parentId) {
         break;
       }
+      
+      const parentNote = notes.find(n => n.id === note.parentId);
+      if (!parentNote) {
+        break;
+      }
+      
+      note = parentNote;
     }
     
     return path;
   };
 
-  const handleCancel = () => {
-    setTitle(note.title);
-    setContent(note.content);
-    onCancel();
+  const formatDate = (date: Date) => {
+    return new Date(date).toLocaleString();
   };
 
-  if (!isEditing) {
-    return (
-      <div className="note-editor view-mode">
-                 <div className="note-header">
-           <h2>{note.title}</h2>
-           {note.level > 0 && (
-             <div className="note-breadcrumb">
-               {getNotePath(note).slice(0, -1).map((pathNote, index) => (
-                 <span key={pathNote.id} className="breadcrumb-item">
-                   {pathNote.title}
-                   {index < getNotePath(note).length - 2 && <span className="breadcrumb-separator"> › </span>}
-                 </span>
-               ))}
-             </div>
-           )}
-           <div className="note-meta">
-             <span>Created: {new Date(note.createdAt).toLocaleDateString()}</span>
-             <span>Updated: {new Date(note.updatedAt).toLocaleDateString()}</span>
-             <span className="note-level-badge">Level {note.level}</span>
-             {note.parentId && (
-               <span className="parent-note-info">
-                 Parent: {notes.find(n => n.id === note.parentId)?.title || 'Unknown'}
-               </span>
-             )}
-           </div>
-           {onEditNote && (
-             <button
-               className="edit-btn"
-               onClick={onEditNote}
-             >
-               <Edit size={16} />
-               Edit
-             </button>
-           )}
-         </div>
-        <div className="note-content">
-          {note.content ? (
-            <div className="content-text">{note.content}</div>
-          ) : (
-            <div className="empty-content">
-              <p>No content yet. Click edit to add some!</p>
-            </div>
-          )}
-          
-          {note.tags && note.tags.length > 0 && (
-            <div className="note-tags">
-              {note.tags.map(tag => (
-                <span key={tag} className="tag">
-                  #{tag}
-                </span>
-              ))}
-            </div>
-          )}
-        </div>
-      </div>
-    );
+  // Debounce utility function
+  function debounce<T extends (...args: any[]) => any>(
+    func: T,
+    wait: number
+  ): (...args: Parameters<T>) => void {
+    let timeout: NodeJS.Timeout;
+    return (...args: Parameters<T>) => {
+      clearTimeout(timeout);
+      timeout = setTimeout(() => func(...args), wait);
+    };
   }
 
   return (
-    <div className="note-editor edit-mode">
+    <div className="note-editor">
       <div className="editor-header">
-        <input
-          type="text"
-          className="title-input"
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          placeholder="Note title..."
-          autoFocus
-        />
-        <div className="editor-actions">
-          <button
-            className="save-btn"
-            onClick={handleSave}
-            disabled={!title.trim()}
-          >
-            <Save size={16} />
-            Save
-          </button>
-          <button className="cancel-btn" onClick={handleCancel}>
-            <X size={16} />
-            Cancel
-          </button>
-        </div>
-      </div>
-      
-      <textarea
-        className="content-textarea"
-        value={content}
-        onChange={(e) => setContent(e.target.value)}
-        placeholder="Start writing your note..."
-        rows={20}
-      />
-      
-      <div className="tags-section">
-        <h4>Tags</h4>
-        <div className="tags-input">
-          <input
-            type="text"
-            value={newTag}
-            onChange={(e) => setNewTag(e.target.value)}
-            onKeyPress={handleTagKeyPress}
-            placeholder="Add a tag..."
-            className="tag-input"
-          />
-          <button onClick={addTag} className="add-tag-btn">
-            Add
-          </button>
-        </div>
-        <div className="tags-display">
-          {tags.map(tag => (
-            <span key={tag} className="tag">
-              #{tag}
-              <button
-                onClick={() => removeTag(tag)}
-                className="remove-tag-btn"
-                title="Remove tag"
-              >
-                ×
-              </button>
+        <div className="note-info">
+          <div className="note-path">
+            {getNotePath(note.id).map((title, index) => (
+              <span key={index} className="path-segment">
+                {title}
+                {index < getNotePath(note.id).length - 1 && <span className="path-separator"> / </span>}
+              </span>
+            ))}
+          </div>
+          <div className="note-meta">
+            <span className="note-level-badge">Level {note.level}</span>
+            {note.parentId && (
+              <span className="parent-note-info">
+                Parent: {notes.find(n => n.id === note.parentId)?.title || 'Unknown'}
+              </span>
+            )}
+            <span className="note-date">
+              Last saved: {formatDate(lastSaved)}
+              {isSaving && <span className="saving-indicator"> (Saving...)</span>}
             </span>
-          ))}
+          </div>
         </div>
       </div>
 
-      {onGenerateNote && (
-        <div className="ai-generator-section">
-          <h4>
-            <Sparkles size={16} />
-            AI Content Generator
-          </h4>
-          <AIGenerator 
-            onGenerateNote={(generatedNote) => {
-              // Update the current note content with AI-generated content
-              setContent(generatedNote.content);
-              setTitle(generatedNote.title);
-              setTags(generatedNote.tags || []);
-            }} 
+      <div className="editor-content">
+        <div className="title-section">
+          <input
+            type="text"
+            className="note-title-input"
+            value={title}
+            onChange={handleTitleChange}
+            placeholder="Note title..."
           />
         </div>
-      )}
-      
-      <div className="editor-footer">
-        <div className="note-info">
-          <span>Last modified: {new Date(note.updatedAt).toLocaleString()}</span>
+
+        <div className="content-section">
+          <textarea
+            className="note-content-textarea"
+            value={content}
+            onChange={handleContentChange}
+            placeholder="Start writing your note..."
+            rows={15}
+          />
+        </div>
+
+        <div className="tags-section">
+          <h4>Tags</h4>
+          <div className="tags-input-container">
+            <input
+              type="text"
+              className="tag-input"
+              value={newTag}
+              onChange={(e) => setNewTag(e.target.value)}
+              onKeyPress={handleKeyPress}
+              placeholder="Add a tag..."
+            />
+            <button className="add-tag-btn" onClick={handleAddTag}>
+              <Plus size={16} />
+            </button>
+          </div>
+          <div className="tags-display">
+            {tags.map(tag => (
+              <span key={tag} className="tag">
+                #{tag}
+                <button
+                  className="remove-tag-btn"
+                  onClick={() => handleRemoveTag(tag)}
+                >
+                  <X size={12} />
+                </button>
+              </span>
+            ))}
+          </div>
+        </div>
+
+        <div className="ai-generator-section">
+          <AIGenerator onGenerateNote={onGenerateNote} />
         </div>
       </div>
     </div>
