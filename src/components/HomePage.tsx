@@ -32,7 +32,7 @@ const HomePage: React.FC<HomePageProps> = ({
   onSearchChange
 }) => {
   const navigate = useNavigate();
-  const [viewMode, setViewMode] = useState<'mindmap' | 'list'>('mindmap');
+  const [viewMode, setViewMode] = useState<'mindmap' | 'list'>('list');
 
   const filteredNotes = notes.filter(note =>
     note.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -54,17 +54,17 @@ const HomePage: React.FC<HomePageProps> = ({
       <main className="App-main">
         <div className="full-width-content">
           <div className="view-toggle">
+          <button
+              className={`toggle-btn ${viewMode === 'list' ? 'active' : ''}`}
+              onClick={() => setViewMode('list')}
+            >
+              📝 List View
+            </button>
             <button
               className={`toggle-btn ${viewMode === 'mindmap' ? 'active' : ''}`}
               onClick={() => setViewMode('mindmap')}
             >
               🗺️ Mind Map
-            </button>
-            <button
-              className={`toggle-btn ${viewMode === 'list' ? 'active' : ''}`}
-              onClick={() => setViewMode('list')}
-            >
-              📝 List View
             </button>
           </div>
           
