@@ -28,12 +28,41 @@ const NotePage: React.FC = () => {
     note.content.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  // Auto-select current note if none selected
-  useEffect(() => {
-    if (currentNote && !selectedNote) {
-      dispatch(selectNote(currentNote));
-    }
-  }, [currentNote, selectedNote, dispatch]);
+  // Get notes to display in sidebar - only the selected note and its children
+  const getNotesForSidebar = (): Note[] => {
+    if (!selectedNote) return [];
+    
+    // Start with the selected note
+    const notesToShow: Note[] = [];
+    
+    // First, add all parent notes from root to selected note
+    const addParentPath = (noteId: string) => {
+      const note = notes.find(n => n.id === noteId);
+      if (note && note.parentId) {
+        addParentPath(note.parentId); // Recursively add parents first
+      }
+      if (note) {
+        notesToShow.push(note);
+      }
+    };
+    
+    // Add the full path from root to selected note
+    addParentPath(selectedNote.id);
+    
+    // Then add all children of the selected note
+    const addChildren = (parentId: string) => {
+      const children = notes.filter(note => note.parentId === parentId);
+      children.forEach(child => {
+        notesToShow.push(child);
+        addChildren(child.id); // Recursively add grandchildren
+      });
+    };
+    
+    addChildren(selectedNote.id);
+    return notesToShow;
+  };
+
+  const sidebarNotes = getNotesForSidebar();
 
   if (!currentNote) {
     return (
@@ -66,6 +95,7 @@ const NotePage: React.FC = () => {
   };
 
   const handleNoteClick = (note: Note) => {
+    dispatch(selectNote(note));
     navigate(`/note/${note.id}`);
   };
 
@@ -161,7 +191,7 @@ const NotePage: React.FC = () => {
           
           {viewMode === 'mindmap' ? (
             <MindMap
-              notes={filteredNotes}
+              notes={sidebarNotes}
               selectedNote={selectedNote}
               onSelectNote={handleNoteSelect}
               onDeleteNote={handleDeleteNote}
@@ -172,7 +202,7 @@ const NotePage: React.FC = () => {
             />
           ) : (
             <NoteList 
-              notes={filteredNotes}
+              notes={sidebarNotes}
               selectedNote={selectedNote}
               onDeleteNote={handleDeleteNote}
               onEditNote={handleNoteClick}
@@ -180,6 +210,7 @@ const NotePage: React.FC = () => {
               onCreateNote={handleCreateNote}
               onSelectNote={handleNoteSelect}
               onNavigateToNote={handleNoteClick}
+              showCreateButton={false}
             />
           )}
         </div>

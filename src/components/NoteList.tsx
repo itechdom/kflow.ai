@@ -11,6 +11,7 @@ interface NoteListProps {
   onAddChildNote: (parentNote: Note) => void;
   onCreateNote: () => void;
   onNavigateToNote: (note: Note) => void;
+  showCreateButton?: boolean; // New prop to control button visibility
 }
 
 const NoteList: React.FC<NoteListProps> = ({
@@ -21,7 +22,8 @@ const NoteList: React.FC<NoteListProps> = ({
   onEditNote,
   onAddChildNote,
   onCreateNote,
-  onNavigateToNote
+  onNavigateToNote,
+  showCreateButton = true // Default to true for backward compatibility
 }) => {
   const [expandedNotes, setExpandedNotes] = useState<Set<string>>(new Set());
 
@@ -30,6 +32,13 @@ const NoteList: React.FC<NoteListProps> = ({
   };
 
   const createChildNote = (parentNote: Note) => {
+    // Automatically expand the parent note to show the new child
+    if (!expandedNotes.has(parentNote.id)) {
+      const newExpanded = new Set(expandedNotes);
+      newExpanded.add(parentNote.id);
+      setExpandedNotes(newExpanded);
+    }
+    
     onAddChildNote(parentNote);
   };
 
@@ -190,25 +199,29 @@ const NoteList: React.FC<NoteListProps> = ({
              })}
            </div>
         </div>
-        <button 
-          className="new-note-btn"
-          onClick={createNewNote}
-          title="Create new note"
-        >
-          <Plus size={16} />
-        </button>
+        {showCreateButton && (
+          <button 
+            className="new-note-btn"
+            onClick={createNewNote}
+            title="Create new note"
+          >
+            <Plus size={16} />
+          </button>
+        )}
       </div>
       
       <div className="notes-container">
         {notes.length === 0 ? (
           <div className="empty-state">
             <p>No notes yet</p>
-            <button 
-              className="create-first-note-btn"
-              onClick={createNewNote}
-            >
-              Create your first note
-            </button>
+            {showCreateButton && (
+              <button 
+                className="create-first-note-btn"
+                onClick={createNewNote}
+              >
+                Create your first note
+              </button>
+            )}
           </div>
         ) : (
           getRootNotes().map(note => renderNoteItem(note))

@@ -34,33 +34,41 @@ const NoteEditor: React.FC<NoteEditorProps> = ({
     [onSave]
   );
 
-  // Auto-save when title, content, or tags change
-  useEffect(() => {
-    if (note.id) {
-      const updatedNote = {
-        ...note,
-        title,
-        content,
-        tags,
-        updatedAt: new Date()
-      };
-      debouncedSave(updatedNote);
-    }
-  }, [title, content, tags, note.id, debouncedSave]);
-
-  // Update local state when note prop changes
+  // Update local state when note prop changes (only when note ID changes)
   useEffect(() => {
     setTitle(note.title);
     setContent(note.content);
     setTags(note.tags);
-  }, [note.id, note.title, note.content, note.tags]);
+  }, [note.id]); // Only depend on note.id to prevent infinite re-renders
 
   const handleTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setTitle(e.target.value);
+    const newTitle = e.target.value;
+    setTitle(newTitle);
+    
+    // Trigger auto-save when user types in title
+    const updatedNote = {
+      ...note,
+      title: newTitle,
+      content,
+      tags,
+      updatedAt: new Date()
+    };
+    debouncedSave(updatedNote);
   };
 
   const handleContentChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    setContent(e.target.value);
+    const newContent = e.target.value;
+    setContent(newContent);
+    
+    // Trigger auto-save when user types in content
+    const updatedNote = {
+      ...note,
+      title,
+      content: newContent,
+      tags,
+      updatedAt: new Date()
+    };
+    debouncedSave(updatedNote);
   };
 
   const handleAddTag = () => {
@@ -68,11 +76,32 @@ const NoteEditor: React.FC<NoteEditorProps> = ({
       const updatedTags = [...tags, newTag.trim()];
       setTags(updatedTags);
       setNewTag('');
+      
+      // Trigger auto-save when user adds a tag
+      const updatedNote = {
+        ...note,
+        title,
+        content,
+        tags: updatedTags,
+        updatedAt: new Date()
+      };
+      debouncedSave(updatedNote);
     }
   };
 
   const handleRemoveTag = (tagToRemove: string) => {
-    setTags(tags.filter(tag => tag !== tagToRemove));
+    const updatedTags = tags.filter(tag => tag !== tagToRemove);
+    setTags(updatedTags);
+    
+    // Trigger auto-save when user removes a tag
+    const updatedNote = {
+      ...note,
+      title,
+      content,
+      tags: updatedTags,
+      updatedAt: new Date()
+    };
+    debouncedSave(updatedNote);
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
