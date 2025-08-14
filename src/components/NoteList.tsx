@@ -7,7 +7,7 @@ interface NoteListProps {
   selectedNote: Note | null;
   onSelectNote: (note: Note) => void;
   onDeleteNote: (noteId: string) => void;
-  onEditNote: () => void;
+  onEditNote: (note: Note) => void;
   onAddChildNote: (parentNote: Note) => void;
   onCreateNote: () => void;
   onNavigateToNote?: (note: Note) => void;
@@ -62,8 +62,6 @@ const NoteList: React.FC<NoteListProps> = ({
 
   // Get notes with updated children arrays
   const notesWithChildren = updateChildrenArrays(notes);
-
-  console.log("Notes with children",notesWithChildren);
 
   const getRootNotes = (): Note[] => {
     return notesWithChildren.filter(note => !note.parentId);
@@ -147,7 +145,7 @@ const NoteList: React.FC<NoteListProps> = ({
              onClick={(e) => {
                e.stopPropagation();
                onSelectNote(note);
-               onEditNote();
+               onEditNote(note);
              }}
              title="Edit note"
            >

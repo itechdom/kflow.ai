@@ -7,9 +7,10 @@ interface MindMapProps {
   selectedNote: Note | null;
   onSelectNote: (note: Note) => void;
   onDeleteNote: (noteId: string) => void;
-  onEditNote: () => void;
+  onEditNote: (note: Note) => void;
   onCreateNote: () => void;
   onAddChildNote: (parentNote: Note) => void;
+  onNavigateToNote?: (note: Note) => void;
 }
 
 interface TreeNode {
@@ -35,7 +36,8 @@ const MindMap: React.FC<MindMapProps> = ({
   onDeleteNote,
   onEditNote,
   onCreateNote,
-  onAddChildNote
+  onAddChildNote,
+  onNavigateToNote
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const [hoveredNode, setHoveredNode] = useState<TreeNode | null>(null);
@@ -205,9 +207,14 @@ const MindMap: React.FC<MindMapProps> = ({
     if (node.id === 'virtual-root') return;
     const note = notes.find(n => n.id === node.id);
     if (note) {
+      // First select the note to ensure it's properly set in state
       onSelectNote(note);
+      // Then navigate if navigation function is provided
+      if (onNavigateToNote) {
+        onNavigateToNote(note);
+      }
     }
-  }, [notes, onSelectNote]);
+  }, [notes, onSelectNote, onNavigateToNote]);
 
   // Handle node hover
   const handleNodeHover = useCallback((node: TreeNode | null) => {

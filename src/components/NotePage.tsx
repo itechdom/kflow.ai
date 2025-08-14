@@ -43,16 +43,19 @@ const NotePage: React.FC<NotePageProps> = ({
     note.content.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  // Sync editing state when selectedNote changes
+  // Sync editing state when selectedNote changes and auto-select current note if none selected
   useEffect(() => {
-    if (currentNote && selectedNote && selectedNote.id === currentNote.id) {
+    if (currentNote && !selectedNote) {
+      // If no note is selected, automatically select the current note
+      onSelectNote(currentNote);
+    } else if (currentNote && selectedNote && selectedNote.id === currentNote.id) {
       // If the current note is selected, allow editing
       setIsEditing(true);
     } else if (currentNote && selectedNote && selectedNote.id !== currentNote.id) {
       // If a different note is selected, don't edit the current note
       setIsEditing(false);
     }
-  }, [selectedNote, currentNote]);
+  }, [selectedNote, currentNote, onSelectNote]);
 
   if (!currentNote) {
     return (
@@ -80,10 +83,10 @@ const NotePage: React.FC<NotePageProps> = ({
     );
   }
 
-  const handleEditNote = () => {
+  const handleEditNote = (note: Note) => {
     setIsEditing(true);
-    // Also select the current note for editing
-    onSelectNote(currentNote);
+    // Select the note for editing
+    onSelectNote(note);
   };
 
   const handleToggleEdit = () => {
@@ -100,6 +103,11 @@ const NotePage: React.FC<NotePageProps> = ({
   const handleSaveNote = (updatedNote: Note) => {
     onUpdateNote(updatedNote);
     setIsEditing(false);
+    // If we were editing the current note, update the currentNote reference
+    if (updatedNote.id === currentNote.id) {
+      // The currentNote will be updated through the onUpdateNote callback
+      // which updates the global notes state
+    }
   };
 
   const handleCancelEdit = () => {
@@ -197,22 +205,15 @@ const NotePage: React.FC<NotePageProps> = ({
         </div>
         
         <div className="content">
-          {selectedNote ? (
-                         <NoteEditor
-               note={selectedNote}
-               notes={notes}
-               onSave={handleSaveNote}
-               onCancel={handleCancelEdit}
-               isEditing={isEditing}
-               onEditNote={handleToggleEdit}
-               onGenerateNote={onCreateNote}
-             />
-          ) : (
-            <div className="welcome-message">
-              <h2>Welcome to {currentNote.title}</h2>
-              <p>Select a note from the sidebar to view or edit it.</p>
-            </div>
-          )}
+          <NoteEditor
+            note={selectedNote || currentNote}
+            notes={notes}
+            onSave={handleSaveNote}
+            onCancel={handleCancelEdit}
+            isEditing={isEditing}
+            onEditNote={handleToggleEdit}
+            onGenerateNote={onCreateNote}
+          />
         </div>
       </div>
     </div>

@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import NoteList from './NoteList';
 import MindMap from './MindMap';
 import SearchBar from './SearchBar';
-import AIGenerator from './AIGenerator';
 import { Note } from '../types/Note';
 
 interface HomePageProps {
@@ -40,7 +39,9 @@ const HomePage: React.FC<HomePageProps> = ({
   );
 
   const handleNoteClick = (note: Note) => {
-    console.log("NOTE CLicked", note);
+    // First select the note to ensure it's properly set in state
+    onSelectNote(note);
+    // Then navigate to the note page
     navigate(`/note/${note.id}`);
   };
 
@@ -76,21 +77,31 @@ const HomePage: React.FC<HomePageProps> = ({
             <MindMap
               notes={filteredNotes}
               selectedNote={selectedNote}
-              onSelectNote={handleNoteClick}
+              onSelectNote={onSelectNote}
               onDeleteNote={onDeleteNote}
-              onEditNote={onEditNote}
+              onEditNote={(note) => {
+                // When edit button is clicked, select the note and navigate to its page
+                onSelectNote(note);
+                handleNoteClick(note);
+              }}
               onCreateNote={onCreateNote}
               onAddChildNote={onAddChildNote}
+              onNavigateToNote={handleNoteClick}
             />
           ) : (
             <NoteList 
               notes={filteredNotes}
               selectedNote={selectedNote}
-              onSelectNote={handleNoteClick}
+              onSelectNote={onSelectNote}
               onDeleteNote={onDeleteNote}
-              onEditNote={onEditNote}
+              onEditNote={(note) => {
+                // When edit button is clicked, select the note and navigate to its page
+                onSelectNote(note);
+                handleNoteClick(note);
+              }}
               onAddChildNote={onAddChildNote}
               onCreateNote={onCreateNote}
+              onNavigateToNote={handleNoteClick}
             />
           )}
         </div>
