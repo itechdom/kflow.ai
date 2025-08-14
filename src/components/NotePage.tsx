@@ -5,7 +5,6 @@ import { selectNote, deleteNote, addChildNote, createNote, editNote } from '../s
 import { Note } from '../types/Note';
 import NoteList from './NoteList';
 import MindMap from './MindMap';
-import NoteEditor from './NoteEditor';
 import SearchBar from './SearchBar';
 import { ArrowLeft, List, Map } from 'lucide-react';
 
@@ -28,7 +27,14 @@ const NotePage: React.FC = () => {
     note.content.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  // Get notes to display in sidebar - only the selected note and its children
+  // Auto-select current note if none selected
+  useEffect(() => {
+    if (currentNote && !selectedNote) {
+      dispatch(selectNote(currentNote));
+    }
+  }, [currentNote, selectedNote, dispatch]);
+
+  // Get notes to display in sidebar - only the selected note and its hierarchy
   const getNotesForSidebar = (): Note[] => {
     if (!selectedNote) return [];
     
@@ -63,7 +69,7 @@ const NotePage: React.FC = () => {
   };
 
   const sidebarNotes = getNotesForSidebar();
-
+  
   if (!currentNote) {
     return (
       <div className="note-page">
@@ -95,7 +101,6 @@ const NotePage: React.FC = () => {
   };
 
   const handleNoteClick = (note: Note) => {
-    dispatch(selectNote(note));
     navigate(`/note/${note.id}`);
   };
 
@@ -127,16 +132,8 @@ const NotePage: React.FC = () => {
     dispatch(createNote(newNote));
   };
 
-  const handleGenerateNote = (generatedNote: Note) => {
-    // Update the current note with AI-generated content
-    const updatedNote = {
-      ...currentNote,
-      title: generatedNote.title,
-      content: generatedNote.content,
-      tags: generatedNote.tags,
-      updatedAt: new Date()
-    };
-    dispatch(editNote(updatedNote));
+  const handleEditNote = (note: Note) => {
+    dispatch(editNote(note));
   };
 
   return (
@@ -195,7 +192,7 @@ const NotePage: React.FC = () => {
               selectedNote={selectedNote}
               onSelectNote={handleNoteSelect}
               onDeleteNote={handleDeleteNote}
-              onEditNote={handleNoteClick}
+              onEditNote={handleEditNote}
               onCreateNote={handleCreateNote}
               onAddChildNote={handleAddChildNote}
               onNavigateToNote={handleNoteClick}
@@ -205,23 +202,16 @@ const NotePage: React.FC = () => {
               notes={sidebarNotes}
               selectedNote={selectedNote}
               onDeleteNote={handleDeleteNote}
-              onEditNote={handleNoteClick}
+              onEditNote={handleEditNote}
               onAddChildNote={handleAddChildNote}
               onCreateNote={handleCreateNote}
               onSelectNote={handleNoteSelect}
               onNavigateToNote={handleNoteClick}
               showCreateButton={false}
+              autoExpandParent={true}
+              currentNoteId={currentNote.id}
             />
           )}
-        </div>
-        
-        <div className="content">
-          <NoteEditor
-            note={selectedNote || currentNote}
-            notes={notes}
-            onSave={handleSaveNote}
-            onGenerateNote={handleGenerateNote}
-          />
         </div>
       </div>
     </div>

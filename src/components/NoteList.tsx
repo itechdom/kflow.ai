@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { Note } from '../types/Note';
-import { Trash2, Edit, Plus, ChevronRight, ChevronDown, Eye } from 'lucide-react';
+import { Trash2, Plus, ChevronRight, ChevronDown, Save, X, Tag } from 'lucide-react';
+import AIGenerator from './AIGenerator';
 
 interface NoteListProps {
   notes: Note[];
@@ -11,7 +12,14 @@ interface NoteListProps {
   onAddChildNote: (parentNote: Note) => void;
   onCreateNote: () => void;
   onNavigateToNote: (note: Note) => void;
-  showCreateButton?: boolean; // New prop to control button visibility
+  showCreateButton?: boolean;
+  autoExpandParent?: boolean;
+  currentNoteId?: string;
+}
+
+interface EditingState {
+  noteId: string;
+  field: 'title' | 'content' | 'tags';
 }
 
 const NoteList: React.FC<NoteListProps> = ({
@@ -23,9 +31,29 @@ const NoteList: React.FC<NoteListProps> = ({
   onAddChildNote,
   onCreateNote,
   onNavigateToNote,
-  showCreateButton = true // Default to true for backward compatibility
+  showCreateButton = true,
+  autoExpandParent = false,
+  currentNoteId
 }) => {
   const [expandedNotes, setExpandedNotes] = useState<Set<string>>(new Set());
+  const [editingState, setEditingState] = useState<EditingState | null>(null);
+  const [editValues, setEditValues] = useState<{ title: string; content: string; tags: string[] }>({
+    title: '',
+    content: '',
+    tags: []
+  });
+  const [newTag, setNewTag] = useState('');
+
+  // Auto-expand parent note when child is selected
+  useEffect(() => {
+    if (autoExpandParent && currentNoteId && selectedNote) {
+      const currentNote = notes.find(note => note.id === currentNoteId);
+      if (currentNote && currentNote.parentId) {
+        // Auto-expand the parent note
+        setExpandedNotes(prev => new Set([...Array.from(prev), currentNote.parentId!]));
+      }
+    }
+  }, [autoExpandParent, currentNoteId, selectedNote, notes]);
 
   const createNewNote = () => {
     onCreateNote();
@@ -91,17 +119,91 @@ const NoteList: React.FC<NoteListProps> = ({
     onNavigateToNote(note);
   };
 
+  // Inline editing functions
+  const startEditing = (note: Note, field: 'title' | 'content' | 'tags') => {
+    setEditingState({ noteId: note.id, field });
+    setEditValues({
+      title: note.title,
+      content: note.content,
+      tags: [...note.tags]
+    });
+  };
+
+  const saveEdit = (note: Note) => {
+    if (editingState) {
+      const updatedNote = {
+        ...note,
+        title: editValues.title,
+        content: editValues.content,
+        tags: editValues.tags,
+        updatedAt: new Date()
+      };
+      onEditNote(updatedNote);
+      setEditingState(null);
+    }
+  };
+
+  const cancelEdit = () => {
+    setEditingState(null);
+  };
+
+  const handleAddTag = (note: Note) => {
+    if (newTag.trim() && !editValues.tags.includes(newTag.trim())) {
+      const updatedTags = [...editValues.tags, newTag.trim()];
+      setEditValues({ ...editValues, tags: updatedTags });
+      setNewTag('');
+    }
+  };
+
+  const handleRemoveTag = (note: Note, tagToRemove: string) => {
+    const updatedTags = editValues.tags.filter(tag => tag !== tagToRemove);
+    setEditValues({ ...editValues, tags: updatedTags });
+  };
+
+  const handleKeyPress = (e: React.KeyboardEvent, note: Note) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleAddTag(note);
+    }
+  };
+
+  const handleGenerateNote = (generatedNote: Note) => {
+    if (selectedNote) {
+      const updatedNote = {
+        ...selectedNote,
+        title: generatedNote.title,
+        content: generatedNote.content,
+        tags: generatedNote.tags,
+        updatedAt: new Date()
+      };
+      onEditNote(updatedNote);
+    }
+  };
+
   const renderNoteItem = (note: Note) => {
     const hasChildren = note.children && note.children.length > 0;
     const isExpanded = expandedNotes.has(note.id);
     const childNotes = getChildNotes(note.id);
     const displayDepth = note.level;
+    const isEditing = editingState?.noteId === note.id;
+    const isEditingTitle = isEditing && editingState?.field === 'title';
+    const isEditingContent = isEditing && editingState?.field === 'content';
+    const isEditingTags = isEditing && editingState?.field === 'tags';
 
     return (
       <div
         key={note.id}
         className={`note-item ${selectedNote?.id === note.id ? 'selected' : ''}`}
-        style={{ marginLeft: `${displayDepth * 20}px` }}
+        onClick={() => {
+          // Only navigate if it's a root note (no parent)
+          if (!note.parentId) {
+            onNavigateToNote(note);
+          }
+        }}
+        style={{ 
+          marginLeft: `${displayDepth * 20}px`,
+          cursor: !note.parentId ? 'pointer' : 'default'
+        }}
       >
         <div className="note-item-content">
           <div className="note-header-row">
@@ -117,25 +219,149 @@ const NoteList: React.FC<NoteListProps> = ({
                 {isExpanded ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
               </button>
             )}
-            <h4 className="note-title">{note.title}</h4>
+            
+            {isEditingTitle ? (
+              <div className="inline-edit-container">
+                <input
+                  type="text"
+                  className="inline-edit-input title-input"
+                  value={editValues.title}
+                  onChange={(e) => setEditValues({ ...editValues, title: e.target.value })}
+                  autoFocus
+                />
+                <div className="inline-edit-actions">
+                  <button
+                    className="save-btn"
+                    onClick={() => saveEdit(note)}
+                    title="Save"
+                  >
+                    <Save size={14} />
+                  </button>
+                  <button
+                    className="cancel-btn"
+                    onClick={cancelEdit}
+                    title="Cancel"
+                  >
+                    <X size={14} />
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <h4 
+                className="note-title clickable"
+                onClick={() => startEditing(note, 'title')}
+                title="Click to edit title"
+              >
+                {note.title}
+              </h4>
+            )}
+            
             <span className="note-level">L{note.level}</span>
           </div>
           
-          <p className="note-preview">
-            {note.content.length > 100 
-              ? `${note.content.substring(0, 100)}...` 
-              : note.content || 'No content'
-            }
-          </p>
+          {isEditingContent ? (
+            <div className="inline-edit-container">
+              <textarea
+                className="inline-edit-textarea content-textarea"
+                value={editValues.content}
+                onChange={(e) => setEditValues({ ...editValues, content: e.target.value })}
+                rows={4}
+                autoFocus
+              />
+              <div className="inline-edit-actions">
+                <button
+                  className="save-btn"
+                  onClick={() => saveEdit(note)}
+                  title="Save"
+                >
+                  <Save size={14} />
+                </button>
+                <button
+                  className="cancel-btn"
+                  onClick={cancelEdit}
+                  title="Cancel"
+                >
+                  <X size={14} />
+                </button>
+              </div>
+            </div>
+          ) : (
+            <p 
+              className="note-preview clickable"
+              onClick={() => startEditing(note, 'content')}
+              title="Click to edit content"
+            >
+              {note.content.length > 100 
+                ? `${note.content.substring(0, 100)}...` 
+                : note.content || 'No content'
+              }
+            </p>
+          )}
           
           <div className="note-meta">
             <span className="note-date">{formatDate(note.updatedAt)}</span>
-            {note.tags.length > 0 && (
-              <div className="note-tags">
-                {note.tags.slice(0, 3).map(tag => (
-                  <span key={tag} className="tag">#{tag}</span>
-                ))}
-                {note.tags.length > 3 && <span className="more-tags">+{note.tags.length - 3}</span>}
+            
+            {isEditingTags ? (
+              <div className="inline-edit-container tags-edit">
+                <div className="tags-input-container">
+                  <input
+                    type="text"
+                    className="tag-input"
+                    value={newTag}
+                    onChange={(e) => setNewTag(e.target.value)}
+                    onKeyPress={(e) => handleKeyPress(e, note)}
+                    placeholder="Add a tag..."
+                  />
+                  <button className="add-tag-btn" onClick={() => handleAddTag(note)}>
+                    <Plus size={12} />
+                  </button>
+                </div>
+                <div className="tags-display">
+                  {editValues.tags.map(tag => (
+                    <span key={tag} className="tag">
+                      #{tag}
+                      <button
+                        className="remove-tag-btn"
+                        onClick={() => handleRemoveTag(note, tag)}
+                      >
+                        <X size={10} />
+                      </button>
+                    </span>
+                  ))}
+                </div>
+                <div className="inline-edit-actions">
+                  <button
+                    className="save-btn"
+                    onClick={() => saveEdit(note)}
+                    title="Save"
+                  >
+                    <Save size={14} />
+                  </button>
+                  <button
+                    className="cancel-btn"
+                    onClick={cancelEdit}
+                    title="Cancel"
+                  >
+                    <X size={14} />
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div 
+                className="note-tags clickable"
+                onClick={() => startEditing(note, 'tags')}
+                title="Click to edit tags"
+              >
+                {note.tags.length > 0 ? (
+                  <>
+                    {note.tags.slice(0, 3).map(tag => (
+                      <span key={tag} className="tag">#{tag}</span>
+                    ))}
+                    {note.tags.length > 3 && <span className="more-tags">+{note.tags.length - 3}</span>}
+                  </>
+                ) : (
+                  <span className="no-tags">Click to add tags</span>
+                )}
               </div>
             )}
           </div>
@@ -151,16 +377,6 @@ const NoteList: React.FC<NoteListProps> = ({
             title="Add child note"
           >
             <Plus size={14} />
-          </button>
-          <button
-            className="action-btn edit-btn"
-            onClick={(e) => {
-              e.stopPropagation();
-              handleNoteEdit(note);
-            }}
-            title="Edit note"
-          >
-            <Edit size={14} />
           </button>
           <button
             className="action-btn delete-btn"
@@ -188,16 +404,16 @@ const NoteList: React.FC<NoteListProps> = ({
       <div className="note-list-header">
         <div className="header-info">
           <h3>Notes ({notes.length})</h3>
-            <div className="level-stats">
-             {Array.from(new Set(notesWithChildren.map(n => n.level))).sort().map(level => {
-               const count = notesWithChildren.filter(n => n.level === level).length;
-               return (
-                 <span key={level} className="level-stat">
-                   L{level}: {count}
-                 </span>
-               );
-             })}
-           </div>
+          <div className="level-stats">
+            {Array.from(new Set(notesWithChildren.map(n => n.level))).sort().map(level => {
+              const count = notesWithChildren.filter(n => n.level === level).length;
+              return (
+                <span key={level} className="level-stat">
+                  L{level}: {count}
+                </span>
+              );
+            })}
+          </div>
         </div>
         {showCreateButton && (
           <button 
@@ -227,6 +443,13 @@ const NoteList: React.FC<NoteListProps> = ({
           getRootNotes().map(note => renderNoteItem(note))
         )}
       </div>
+
+      {/* AI Generator for the selected note */}
+      {selectedNote && (
+        <div className="ai-generator-section">
+          <AIGenerator onGenerateNote={handleGenerateNote} />
+        </div>
+      )}
     </div>
   );
 };

@@ -5,12 +5,14 @@ import { selectNote, deleteNote, addChildNote, createNote, setSearchQuery } from
 import NoteList from './NoteList';
 import MindMap from './MindMap';
 import SearchBar from './SearchBar';
+import NoteEditor from './NoteEditor';
 import { Note } from '../types/Note';
 
 const HomePage: React.FC = () => {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
   const [viewMode, setViewMode] = useState<'mindmap' | 'list'>('list');
+  const [showCreateModal, setShowCreateModal] = useState(false);
   
   // Get state from Redux
   const { notes, selectedNote, searchQuery } = useAppSelector(state => state.notes);
@@ -40,15 +42,7 @@ const HomePage: React.FC = () => {
   };
 
   const handleCreateNote = () => {
-    const newNote = {
-      title: 'New Note',
-      content: '',
-      tags: [],
-      parentId: undefined,
-      children: [],
-      level: 0
-    };
-    dispatch(createNote(newNote));
+    setShowCreateModal(true);
   };
 
   const handleSearchChange = (query: string) => {
@@ -60,33 +54,50 @@ const HomePage: React.FC = () => {
     handleNoteClick(note);
   };
 
+  const handleSaveNote = (newNote: Note) => {
+    // Create the note in Redux
+    dispatch(createNote(newNote));
+    
+    // Close the modal
+    setShowCreateModal(false);
+    
+    // Navigate to the newly created note's page
+    // The note will be created with a new ID, so we need to find it
+    setTimeout(() => {
+      const createdNote = notes.find(note => 
+        note.title === newNote.title && 
+        note.content === newNote.content &&
+        note.tags.length === newNote.tags.length &&
+        note.tags.every(tag => newNote.tags.includes(tag))
+      );
+      
+      if (createdNote) {
+        navigate(`/note/${createdNote.id}`);
+      }
+    }, 100);
+  };
+
+  const handleCancelCreate = () => {
+    setShowCreateModal(false);
+  };
+
   return (
     <div className="App">
       <header className="App-header">
         <h1>KFlow</h1>
         <p>Knowledge Management & AI-Powered Notes</p>
       </header>
-      
+
       <main className="App-main">
         <div className="full-width-content">
           <div className="view-toggle">
-            <button
-              className={`toggle-btn ${viewMode === 'list' ? 'active' : ''}`}
-              onClick={() => setViewMode('list')}
-            >
-              📝 List View
-            </button>
-            <button
-              className={`toggle-btn ${viewMode === 'mindmap' ? 'active' : ''}`}
-              onClick={() => setViewMode('mindmap')}
-            >
-              🗺️ Mind Map
-            </button>
+            <button className={`toggle-btn ${viewMode === 'list' ? 'active' : ''}`} onClick={() => setViewMode('list')}>📝 List View</button>
+            <button className={`toggle-btn ${viewMode === 'mindmap' ? 'active' : ''}`} onClick={() => setViewMode('mindmap')}>🗺️ Mind Map</button>
           </div>
-          
-          <SearchBar 
-            searchQuery={searchQuery} 
-            onSearchChange={handleSearchChange} 
+
+          <SearchBar
+            searchQuery={searchQuery}
+            onSearchChange={handleSearchChange}
           />          
           {viewMode === 'mindmap' ? (
             <MindMap
@@ -113,6 +124,19 @@ const HomePage: React.FC = () => {
           )}
         </div>
       </main>
+
+      {/* Create Note Modal */}
+      {showCreateModal && (
+        <div className="modal-overlay" onClick={handleCancelCreate}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <NoteEditor
+              onSave={handleSaveNote}
+              onCancel={handleCancelCreate}
+              isCreating={true}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 };
