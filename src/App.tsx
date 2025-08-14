@@ -246,8 +246,6 @@ function App() {
               onUpdateNote={updateNote}
               searchQuery={searchQuery}
               onSearchChange={setSearchQuery}
-              isEditing={isEditing}
-              setIsEditing={setIsEditing}
             />
           } 
         />

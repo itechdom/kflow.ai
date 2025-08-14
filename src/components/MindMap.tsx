@@ -1,5 +1,4 @@
-import React, { useCallback, useMemo, useRef, useState } from 'react';
-import ForceGraph2D from 'react-force-graph-2d';
+import React, { useCallback, useMemo, useRef, useState, useEffect } from 'react';
 import { Note } from '../types/Note';
 import { Plus, Eye } from 'lucide-react';
 
@@ -13,23 +12,20 @@ interface MindMapProps {
   onAddChildNote: (parentNote: Note) => void;
 }
 
-interface GraphNode {
+interface TreeNode {
   id: string;
   title: string;
   content: string;
   createdAt: Date;
   updatedAt: Date;
   tags: string[];
-  x?: number;
-  y?: number;
-  fx?: number;
-  fy?: number;
-}
-
-interface GraphLink {
-  source: string;
-  target: string;
-  type: 'tag' | 'content' | 'hierarchy';
+  level: number;
+  parentId?: string;
+  children: TreeNode[];
+  x: number;
+  y: number;
+  width: number;
+  height: number;
 }
 
 const MindMap: React.FC<MindMapProps> = ({
@@ -41,88 +37,172 @@ const MindMap: React.FC<MindMapProps> = ({
   onCreateNote,
   onAddChildNote
 }) => {
-  const graphRef = useRef<any>(null);
-  const [hoveredNode, setHoveredNode] = useState<GraphNode | null>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [hoveredNode, setHoveredNode] = useState<TreeNode | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const [containerWidth, setContainerWidth] = useState(800);
+  const [containerHeight, setContainerHeight] = useState(600);
 
-  // Convert notes to graph data
-  const graphData = useMemo(() => {
-    if (notes.length === 0) return { nodes: [], links: [] };
-
-    const nodes: GraphNode[] = notes.map(note => ({
-      id: note.id,
-      title: note.title,
-      content: note.content,
-      createdAt: note.createdAt,
-      updatedAt: note.updatedAt,
-      tags: note.tags
-    }));
-
-    const links: GraphLink[] = [];
-    
-    // Create hierarchical links (parent-child relationships)
-    notes.forEach(note => {
-      if (note.parentId) {
-        links.push({
-          source: note.parentId,
-          target: note.id,
-          type: 'hierarchy'
-        });
+  // Update container dimensions
+  useEffect(() => {
+    const updateDimensions = () => {
+      if (containerRef.current) {
+        const rect = containerRef.current.getBoundingClientRect();
+        setContainerWidth(rect.width);
+        setContainerHeight(rect.height);
       }
-    });
-    
-    // Create links based on tag relationships (only between non-hierarchical notes)
-    notes.forEach((note, i) => {
-      notes.slice(i + 1).forEach(otherNote => {
-        // Only create tag links if they're not already connected hierarchically
-        const isHierarchicallyConnected = note.parentId === otherNote.id || 
-                                       otherNote.parentId === note.id ||
-                                       note.parentId === otherNote.parentId;
-        
-        if (!isHierarchicallyConnected) {
-          const commonTags = note.tags.filter(tag => 
-            otherNote.tags.includes(tag)
-          );
-          if (commonTags.length > 0) {
-            links.push({
-              source: note.id,
-              target: otherNote.id,
-              type: 'tag'
-            });
-          }
-        }
-      });
-    });
+    };
 
-    // Create links based on content similarity (only between non-hierarchical notes)
-    notes.forEach((note, i) => {
-      notes.slice(i + 1).forEach(otherNote => {
-        const isHierarchicallyConnected = note.parentId === otherNote.id || 
-                                       otherNote.parentId === note.id ||
-                                       note.parentId === otherNote.parentId;
-        
-        if (!isHierarchicallyConnected) {
-          const noteWords = note.content.toLowerCase().split(/\s+/);
-          const otherWords = otherNote.content.toLowerCase().split(/\s+/);
-          const commonWords = noteWords.filter(word => 
-            word.length > 3 && otherWords.includes(word)
-          );
-          if (commonWords.length >= 2) {
-            links.push({
-              source: note.id,
-              target: otherNote.id,
-              type: 'content'
-            });
-          }
-        }
-      });
-    });
+    updateDimensions();
+    window.addEventListener('resize', updateDimensions);
+    return () => window.removeEventListener('resize', updateDimensions);
+  }, []);
 
-    return { nodes, links };
+  // Convert notes to tree structure
+  const treeData = useMemo(() => {
+    if (notes.length === 0) return null;
+
+    // Create a map of notes by ID
+    const notesMap = new Map<string, Note>();
+    notes.forEach(note => notesMap.set(note.id, note));
+
+    // Build tree structure
+    const buildTree = (note: Note): TreeNode => {
+      const children = notes
+        .filter(n => n.parentId === note.id)
+        .map(childNote => buildTree(childNote));
+
+      return {
+        id: note.id,
+        title: note.title,
+        content: note.content,
+        createdAt: note.createdAt,
+        updatedAt: note.updatedAt,
+        tags: note.tags,
+        level: note.level,
+        parentId: note.parentId,
+        children,
+        x: 0,
+        y: 0,
+        width: 0,
+        height: 0
+      };
+    };
+
+    // Get root notes (no parent)
+    const rootNotes = notes.filter(note => !note.parentId);
+    if (rootNotes.length === 0) return null;
+
+    // Build tree from first root note (or create a virtual root if multiple)
+    let rootNote: Note;
+    if (rootNotes.length === 1) {
+      rootNote = rootNotes[0];
+    } else {
+      // Create a virtual root note if multiple root notes exist
+      rootNote = {
+        id: 'virtual-root',
+        title: 'Root Notes',
+        content: '',
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        tags: [],
+        parentId: undefined,
+        children: [],
+        level: -1
+      };
+    }
+
+    return buildTree(rootNote);
   }, [notes]);
 
+  // Calculate tree layout
+  const layoutTree = useCallback((node: TreeNode, x: number, y: number, level: number): { width: number, height: number } => {
+    const nodeWidth = 200;
+    const nodeHeight = 80;
+    const levelSpacing = 250;
+    const nodeSpacing = 50;
+
+    node.x = x;
+    node.y = y;
+    node.width = nodeWidth;
+    node.height = nodeHeight;
+
+    if (node.children.length === 0) {
+      return { width: nodeWidth, height: nodeHeight };
+    }
+
+    // Calculate total width needed for children
+    let totalChildrenWidth = 0;
+    const childrenLayouts: { width: number, height: number }[] = [];
+
+    node.children.forEach(child => {
+      const childLayout = layoutTree(child, 0, y + levelSpacing, level + 1);
+      childrenLayouts.push(childLayout);
+      totalChildrenWidth += childLayout.width + nodeSpacing;
+    });
+
+    // Remove extra spacing from last child
+    if (childrenLayouts.length > 0) {
+      totalChildrenWidth -= nodeSpacing;
+    }
+
+    // Position children
+    let currentX = x - totalChildrenWidth / 2;
+    node.children.forEach((child, index) => {
+      const childLayout = childrenLayouts[index];
+      layoutTree(child, currentX + childLayout.width / 2, y + levelSpacing, level + 1);
+      currentX += childLayout.width + nodeSpacing;
+    });
+
+    // Return the total width needed for this subtree
+    return {
+      width: Math.max(nodeWidth, totalChildrenWidth),
+      height: nodeHeight + levelSpacing
+    };
+  }, []);
+
+  // Apply tree layout
+  const positionedTree = useMemo(() => {
+    if (!treeData) return null;
+
+    const tree = JSON.parse(JSON.stringify(treeData)) as TreeNode;
+    const centerX = containerWidth / 2;
+    const startY = 50;
+    
+    layoutTree(tree, centerX, startY, 0);
+    return tree;
+  }, [treeData, containerWidth, layoutTree]);
+
+  // Filter tree based on search
+  const filteredTree = useMemo(() => {
+    if (!positionedTree || !searchQuery.trim()) return positionedTree;
+
+    const filterNode = (node: TreeNode): TreeNode | null => {
+      const matchesSearch = 
+        node.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        node.content.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        node.tags.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase()));
+
+      const filteredChildren = node.children
+        .map(child => filterNode(child))
+        .filter(Boolean) as TreeNode[];
+
+      if (matchesSearch || filteredChildren.length > 0) {
+        return {
+          ...node,
+          children: filteredChildren
+        };
+      }
+
+      return null;
+    };
+
+    return filterNode(positionedTree);
+  }, [positionedTree, searchQuery]);
+
   // Handle node click
-  const handleNodeClick = useCallback((node: GraphNode) => {
+  const handleNodeClick = useCallback((node: TreeNode) => {
+    if (node.id === 'virtual-root') return;
     const note = notes.find(n => n.id === node.id);
     if (note) {
       onSelectNote(note);
@@ -130,54 +210,159 @@ const MindMap: React.FC<MindMapProps> = ({
   }, [notes, onSelectNote]);
 
   // Handle node hover
-  const handleNodeHover = useCallback((node: GraphNode | null) => {
+  const handleNodeHover = useCallback((node: TreeNode | null) => {
     setHoveredNode(node);
   }, []);
 
-  // Filter nodes based on search
-  const filteredGraphData = useMemo(() => {
-    if (!searchQuery.trim()) return graphData;
-    
-    const query = searchQuery.toLowerCase();
-    const filteredNodes = graphData.nodes.filter(node =>
-      node.title.toLowerCase().includes(query) ||
-      node.content.toLowerCase().includes(query) ||
-      node.tags.some(tag => tag.toLowerCase().includes(query))
-    );
-    
-    const filteredNodeIds = new Set(filteredNodes.map(n => n.id));
-    const filteredLinks = graphData.links.filter(link =>
-      filteredNodeIds.has(link.source as string) && 
-      filteredNodeIds.has(link.target as string)
-    );
-    
-    return { nodes: filteredNodes, links: filteredLinks };
-  }, [graphData, searchQuery]);
-
   // Node color based on selection and hover
-  const getNodeColor = useCallback((node: GraphNode) => {
+  const getNodeColor = useCallback((node: TreeNode) => {
+    if (node.id === 'virtual-root') return '#94a3b8';
     if (selectedNote?.id === node.id) return '#667eea';
     if (hoveredNode?.id === node.id) return '#10b981';
     return '#64748b';
   }, [selectedNote, hoveredNode]);
 
-  // Node size based on content length
-  const getNodeSize = useCallback((node: GraphNode) => {
-    const baseSize = 8;
-    const contentFactor = Math.min(node.content.length / 100, 2);
-    return baseSize + contentFactor * 4;
-  }, []);
+  // Render tree node
+  const renderNode = useCallback((node: TreeNode) => {
+    if (!filteredTree) return null;
+
+    const isVirtualRoot = node.id === 'virtual-root';
+    const note = notes.find(n => n.id === node.id);
+    const level = note?.level || 0;
+
+    return (
+      <g key={node.id}>
+        {/* Node rectangle */}
+        <rect
+          x={node.x - node.width / 2}
+          y={node.y - node.height / 2}
+          width={node.width}
+          height={node.height}
+          rx={8}
+          fill={getNodeColor(node)}
+          stroke={hoveredNode?.id === node.id ? '#10b981' : '#e2e8f0'}
+          strokeWidth={hoveredNode?.id === node.id ? 2 : 1}
+          cursor="pointer"
+          onClick={() => handleNodeClick(node)}
+          onMouseEnter={() => handleNodeHover(node)}
+          onMouseLeave={() => handleNodeHover(null)}
+        />
+
+        {/* Level badge */}
+        {!isVirtualRoot && (
+          <rect
+            x={node.x - 25}
+            y={node.y - node.height / 2 - 20}
+            width={50}
+            height={20}
+            rx={10}
+            fill="#667eea"
+          />
+        )}
+
+        {/* Level text */}
+        {!isVirtualRoot && (
+          <text
+            x={node.x}
+            y={node.y - node.height / 2 - 10}
+            textAnchor="middle"
+            fill="white"
+            fontSize="10"
+            fontWeight="bold"
+          >
+            L{level}
+          </text>
+        )}
+
+        {/* Title text */}
+        <text
+          x={node.x}
+          y={node.y - 5}
+          textAnchor="middle"
+          fill="white"
+          fontSize="12"
+          fontWeight="600"
+          cursor="pointer"
+          onClick={() => handleNodeClick(node)}
+        >
+          {isVirtualRoot ? node.title : (node.title.length > 20 ? node.title.substring(0, 20) + '...' : node.title)}
+        </text>
+
+        {/* Content preview */}
+        {!isVirtualRoot && (
+          <text
+            x={node.x}
+            y={node.y + 10}
+            textAnchor="middle"
+            fill="white"
+            fontSize="10"
+            opacity={0.8}
+          >
+            {node.content.length > 30 ? node.content.substring(0, 30) + '...' : node.content}
+          </text>
+        )}
+
+        {/* Render children */}
+        {node.children.map(child => renderNode(child))}
+      </g>
+    );
+  }, [filteredTree, notes, getNodeColor, hoveredNode, handleNodeClick, handleNodeHover]);
+
+  // Render connections between nodes
+  const renderConnections = useCallback((node: TreeNode) => {
+    if (!filteredTree) return null;
+
+    return (
+      <g key={`connections-${node.id}`}>
+        {node.children.map(child => (
+          <g key={`connection-${node.id}-${child.id}`}>
+            {/* Connection line */}
+            <line
+              x1={node.x}
+              y1={node.y + node.height / 2}
+              x2={child.x}
+              y2={child.y - child.height / 2}
+              stroke="#667eea"
+              strokeWidth={2}
+              opacity={0.6}
+            />
+            
+            {/* Arrow head */}
+            <polygon
+              points={`${child.x - 5},${child.y - child.height / 2} ${child.x + 5},${child.y - child.height / 2} ${child.x},${child.y - child.height / 2 - 8}`}
+              fill="#667eea"
+              opacity={0.6}
+            />
+          </g>
+        ))}
+        
+        {/* Render connections for children */}
+        {node.children.map(child => renderConnections(child))}
+      </g>
+    );
+  }, [filteredTree]);
 
   if (notes.length === 0) {
     return (
       <div className="mind-map empty">
         <div className="empty-state">
           <h3>No notes yet</h3>
-          <p>Create your first note to start building your knowledge graph</p>
+          <p>Create your first note to start building your knowledge tree</p>
           <button className="create-first-note-btn" onClick={onCreateNote}>
             <Plus size={16} />
             Create your first note
           </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (!filteredTree) {
+    return (
+      <div className="mind-map empty">
+        <div className="empty-state">
+          <h3>No notes found</h3>
+          <p>Try adjusting your search query</p>
         </div>
       </div>
     );
@@ -190,7 +375,7 @@ const MindMap: React.FC<MindMapProps> = ({
           <input
             type="text"
             className="search-input"
-            placeholder="Search notes in graph..."
+            placeholder="Search notes in tree..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
           />
@@ -202,96 +387,40 @@ const MindMap: React.FC<MindMapProps> = ({
           </button>
           <button 
             className="control-btn"
-            onClick={() => graphRef.current?.zoomToFit(400)}
+            onClick={() => {
+              if (containerRef.current) {
+                containerRef.current.scrollTo({
+                  top: 0,
+                  left: 0,
+                  behavior: 'smooth'
+                });
+              }
+            }}
           >
             <Eye size={16} />
-            Fit View
+            Top View
           </button>
         </div>
       </div>
       
-      <div className="graph-container">
-        <ForceGraph2D
-          ref={graphRef}
-          graphData={filteredGraphData}
-          nodeLabel={(node: GraphNode) => {
-            const note = notes.find(n => n.id === node.id);
-            const level = note?.level || 0;
-            const parentTitle = note?.parentId ? notes.find(n => n.id === note.parentId)?.title : null;
-            
-            return `
-              <div style="background: white; padding: 8px; border-radius: 4px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
-                <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
-                  <span style="background: #667eea; color: white; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: bold;">L${level}</span>
-                  <strong>${node.title}</strong>
-                </div>
-                <small style="color: #666;">${node.content.substring(0, 50)}${node.content.length > 50 ? '...' : ''}</small><br/>
-                ${parentTitle ? `<small style="color: #f59e0b;">Parent: ${parentTitle}</small><br/>` : ''}
-                <small style="color: #10b981;">Tags: ${node.tags.join(', ') || 'None'}</small>
-              </div>
-            `;
-          }}
-          nodeColor={getNodeColor}
-          nodeVal={getNodeSize}
-          linkColor={(link: GraphLink) => {
-            switch (link.type) {
-              case 'hierarchy': return '#667eea';
-              case 'tag': return '#10b981';
-              case 'content': return '#f59e0b';
-              default: return '#64748b';
-            }
-          }}
-          linkWidth={1}
-          onNodeClick={handleNodeClick}
-          onNodeHover={handleNodeHover}
-          cooldownTicks={100}
-          nodeCanvasObject={(node: GraphNode, ctx: CanvasRenderingContext2D, globalScale: number) => {
-            const note = notes.find(n => n.id === node.id);
-            const level = note?.level || 0;
-            const label = node.title;
-            const fontSize = 12 / globalScale;
-            ctx.font = `${fontSize}px Sans-Serif`;
-            const textWidth = ctx.measureText(label).width;
-            const bckgDimensions = [textWidth + 12, fontSize + 8];
-
-            // Add level indicator
-            const levelText = `L${level}`;
-            const levelFontSize = 10 / globalScale;
-            ctx.font = `${levelFontSize}px Sans-Serif`;
-            const levelWidth = ctx.measureText(levelText).width;
-            const levelHeight = levelFontSize + 4;
-
-            // Draw level badge background
-            ctx.fillStyle = 'rgba(102, 126, 234, 0.9)';
-            ctx.fillRect(
-              (node.x || 0) - levelWidth / 2 - 2,
-              (node.y || 0) - bckgDimensions[1] / 2 - levelHeight - 2,
-              levelWidth + 4,
-              levelHeight
-            );
-
-            // Draw level text
-            ctx.fillStyle = 'white';
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-            ctx.fillText(levelText, node.x || 0, (node.y || 0) - bckgDimensions[1] / 2 - levelHeight / 2);
-
-            // Draw main label background
-            ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
-            ctx.fillRect(
-              (node.x || 0) - bckgDimensions[0] / 2,
-              (node.y || 0) - bckgDimensions[1] / 2,
-              bckgDimensions[0],
-              bckgDimensions[1]
-            );
-
-            // Draw main label text
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-            ctx.fillStyle = getNodeColor(node);
-            ctx.fillText(label, node.x || 0, node.y || 0);
-          }}
-        />
+      <div className="tree-container" ref={containerRef}>
+        <svg
+          width={containerWidth}
+          height={Math.max(containerHeight, 800)}
+          style={{ display: 'block' }}
+        >
+          <defs>
+            <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+              <feDropShadow dx="2" dy="2" stdDeviation="3" floodColor="rgba(0,0,0,0.3)"/>
+            </filter>
+          </defs>
+          
+          {/* Render connections first (behind nodes) */}
+          {renderConnections(filteredTree)}
+          
+          {/* Render nodes on top */}
+          {renderNode(filteredTree)}
+        </svg>
       </div>
       
       <div className="graph-legend">
@@ -300,16 +429,12 @@ const MindMap: React.FC<MindMapProps> = ({
           <span>Parent-child</span>
         </div>
         <div className="legend-item">
-          <div className="legend-color tag"></div>
-          <span>Tag connections</span>
-        </div>
-        <div className="legend-item">
-          <div className="legend-color content"></div>
-          <span>Content similarity</span>
-        </div>
-        <div className="legend-item">
           <div className="legend-color selected"></div>
           <span>Selected note</span>
+        </div>
+        <div className="legend-item">
+          <div className="legend-color hover"></div>
+          <span>Hovered note</span>
         </div>
       </div>
     </div>

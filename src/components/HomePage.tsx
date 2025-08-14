@@ -4,7 +4,6 @@ import NoteList from './NoteList';
 import MindMap from './MindMap';
 import SearchBar from './SearchBar';
 import AIGenerator from './AIGenerator';
-import NoteEditor from './NoteEditor';
 import { Note } from '../types/Note';
 
 interface HomePageProps {
@@ -18,8 +17,6 @@ interface HomePageProps {
   onUpdateNote: (note: Note) => void;
   searchQuery: string;
   onSearchChange: (query: string) => void;
-  isEditing: boolean;
-  setIsEditing: (editing: boolean) => void;
 }
 
 const HomePage: React.FC<HomePageProps> = ({
@@ -32,9 +29,7 @@ const HomePage: React.FC<HomePageProps> = ({
   onCreateNote,
   onUpdateNote,
   searchQuery,
-  onSearchChange,
-  isEditing,
-  setIsEditing
+  onSearchChange
 }) => {
   const navigate = useNavigate();
   const [viewMode, setViewMode] = useState<'mindmap' | 'list'>('mindmap');
@@ -57,7 +52,7 @@ const HomePage: React.FC<HomePageProps> = ({
       </header>
       
       <main className="App-main">
-        <div className="sidebar">
+        <div className="full-width-content">
           <div className="view-toggle">
             <button
               className={`toggle-btn ${viewMode === 'mindmap' ? 'active' : ''}`}
@@ -83,7 +78,7 @@ const HomePage: React.FC<HomePageProps> = ({
               selectedNote={selectedNote}
               onSelectNote={handleNoteClick}
               onDeleteNote={onDeleteNote}
-              onEditNote={() => setIsEditing(true)}
+              onEditNote={onEditNote}
               onCreateNote={onCreateNote}
               onAddChildNote={onAddChildNote}
             />
@@ -93,27 +88,10 @@ const HomePage: React.FC<HomePageProps> = ({
               selectedNote={selectedNote}
               onSelectNote={handleNoteClick}
               onDeleteNote={onDeleteNote}
-              onEditNote={() => setIsEditing(true)}
+              onEditNote={onEditNote}
               onAddChildNote={onAddChildNote}
               onCreateNote={onCreateNote}
             />
-          )}
-        </div>
-        
-        <div className="content">
-          {selectedNote ? (
-            <NoteEditor
-              note={selectedNote}
-              notes={notes}
-              onSave={onUpdateNote}
-              onCancel={() => setIsEditing(false)}
-              isEditing={isEditing}
-            />
-          ) : (
-            <div className="welcome-message">
-              <h2>Welcome to KFlow</h2>
-              <p>Create your first note or use AI to generate content!</p>
-            </div>
           )}
         </div>
       </main>

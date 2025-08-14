@@ -59,6 +59,15 @@ body {
   box-shadow: 2px 0 4px rgba(0, 0, 0, 0.05);
 }
 
+.full-width-content {
+  flex: 1;
+  background: white;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 2px 0 4px rgba(0, 0, 0, 0.05);
+  padding: 1rem;
+}
+
 /* Content area */
 .content {
   flex: 1;
@@ -910,10 +919,24 @@ body {
   background: #e2e8f0;
 }
 
-.graph-container {
+.graph-container,
+.tree-container {
   flex: 1;
   background: #f8fafc;
   position: relative;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  overflow: auto;
+}
+
+.tree-container {
+  min-height: 800px;
+}
+
+.tree-container svg {
+  display: block;
+  width: 100%;
+  height: 100%;
 }
 
 .graph-legend {
@@ -953,6 +976,10 @@ body {
 
 .legend-color.hierarchy {
   background: #667eea;
+}
+
+.legend-color.hover {
+  background: #10b981;
 }
 
 /* Responsive design */
