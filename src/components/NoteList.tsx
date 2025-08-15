@@ -243,7 +243,7 @@ const NoteList: React.FC<NoteListProps> = ({
 						)}
 						
 						{isEditingTitle ? (
-							<div className="inline-edit-container">
+							<div className="inline-edit-container" onClick={(e) => e.stopPropagation()}>
 								<input
 									type="text"
 									className="inline-edit-input title-input"
@@ -260,7 +260,7 @@ const NoteList: React.FC<NoteListProps> = ({
 						) : (
 							<h4 
 								className="note-title clickable"
-								onClick={() => startEditing(note, 'title')}
+								onClick={(e) => { e.stopPropagation(); startEditing(note, 'title'); }}
 								title="Click to edit title"
 							>
 								{note.title}
@@ -271,7 +271,7 @@ const NoteList: React.FC<NoteListProps> = ({
 					</div>
 					
 					{isEditingContent ? (
-						<div className="inline-edit-container">
+						<div className="inline-edit-container" onClick={(e) => e.stopPropagation()}>
 							<textarea
 								className="inline-edit-textarea content-textarea"
 								value={editValues.content}
@@ -288,7 +288,7 @@ const NoteList: React.FC<NoteListProps> = ({
 					) : (
 						<p 
 							className="note-preview clickable"
-							onClick={() => startEditing(note, 'content')}
+							onClick={(e) => { e.stopPropagation(); startEditing(note, 'content'); }}
 							title="Click to edit content"
 						>
 							{note.content.length > 100 
@@ -305,6 +305,7 @@ const NoteList: React.FC<NoteListProps> = ({
 							<div
 								className="inline-edit-container tags-edit"
 								ref={tagsContainerRef}
+								onClick={(e) => e.stopPropagation()}
 								onBlur={(e) => {
 									const next = e.relatedTarget as Node | null;
 									if (!next || (tagsContainerRef.current && !tagsContainerRef.current.contains(next))) {
@@ -351,7 +352,7 @@ const NoteList: React.FC<NoteListProps> = ({
 						) : (
 							<div 
 								className="note-tags clickable"
-								onClick={() => startEditing(note, 'tags')}
+								onClick={(e) => { e.stopPropagation(); startEditing(note, 'tags'); }}
 								title="Click to edit tags"
 							>
 								{note.tags.length > 0 ? (

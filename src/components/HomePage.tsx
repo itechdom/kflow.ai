@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router';
+import { useNavigate } from 'react-router-dom';
 import { useAppSelector, useAppDispatch } from '../store/hooks';
-import { selectNote, deleteNote, addChildNote, createNote, setSearchQuery } from '../store/noteSlice';
+import { selectNote, deleteNote, addChildNote, createNote, setSearchQuery, editNote } from '../store/noteSlice';
 import NoteList from './NoteList';
 import MindMap from './MindMap';
 import SearchBar from './SearchBar';
@@ -50,8 +50,8 @@ const HomePage: React.FC = () => {
   };
 
   const handleEditNote = (note: Note) => {
-    // When edit button is clicked, navigate to the note page
-    handleNoteClick(note);
+    // Inline edits should only update the store, not navigate
+    dispatch(editNote(note));
   };
 
   const handleSaveNote = (newNote: Note) => {
