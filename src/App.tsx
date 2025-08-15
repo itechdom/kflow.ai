@@ -1,5 +1,5 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route } from 'react-router';
 import { Provider } from 'react-redux';
 import { store } from './store/store';
 import HomePage from './components/HomePage';
