@@ -16,6 +16,8 @@ interface NoteListProps {
 	showFullContent?: boolean;
 	autoExpandParent?: boolean;
 	currentNoteId?: string;
+	onToggleExpand: (noteId: string) => void;
+	onEnsureExpanded?: (noteId: string) => void;
 }
 
 interface EditingState {
@@ -35,9 +37,10 @@ const NoteList: React.FC<NoteListProps> = ({
 	showCreateButton = true,
 	showFullContent = true,
 	autoExpandParent = false,
-	currentNoteId
+	currentNoteId,
+	onToggleExpand,
+	onEnsureExpanded
 }) => {
-	const [expandedNotes, setExpandedNotes] = useState<Set<string>>(new Set());
 	const [editingState, setEditingState] = useState<EditingState | null>(null);
 	const [editValues, setEditValues] = useState<{ title: string; content: string; tags: string[] }>({
 		title: '',
@@ -71,24 +74,18 @@ const NoteList: React.FC<NoteListProps> = ({
 		if (autoExpandParent && currentNoteId && selectedNote) {
 			const currentNote = notes.find(note => note.id === currentNoteId);
 			if (currentNote && currentNote.parentId) {
-				// Auto-expand the parent note
-				setExpandedNotes(prev => new Set([...Array.from(prev), currentNote.parentId!]));
+				onEnsureExpanded && onEnsureExpanded(currentNote.parentId);
 			}
 		}
-	}, [autoExpandParent, currentNoteId, selectedNote, notes]);
+	}, [autoExpandParent, currentNoteId, selectedNote, notes, onEnsureExpanded]);
 
 	const createNewNote = () => {
 		onCreateNote();
 	};
 
 	const createChildNote = (parentNote: Note) => {
-		// Automatically expand the parent note to show the new child
-		if (!expandedNotes.has(parentNote.id)) {
-			const newExpanded = new Set(expandedNotes);
-			newExpanded.add(parentNote.id);
-			setExpandedNotes(newExpanded);
-		}
-		
+		// Ensure parent is expanded and saved
+		onEnsureExpanded && onEnsureExpanded(parentNote.id);
 		onAddChildNote(parentNote);
 	};
 
@@ -97,13 +94,7 @@ const NoteList: React.FC<NoteListProps> = ({
 	};
 
 	const toggleExpanded = (noteId: string) => {
-		const newExpanded = new Set(expandedNotes);
-		if (newExpanded.has(noteId)) {
-			newExpanded.delete(noteId);
-		} else {
-			newExpanded.add(noteId);
-		}
-		setExpandedNotes(newExpanded);
+		onToggleExpand(noteId);
 	};
 
 	const getChildNotes = (noteId: string): Note[] => {
@@ -125,20 +116,8 @@ const NoteList: React.FC<NoteListProps> = ({
 		return notesWithChildren.filter(note => !note.parentId);
 	};
 
-	const handleNoteSelect = (note: Note) => {
-		onSelectNote(note);
-	};
-
 	const handleNoteDelete = (noteId: string) => {
 		onDeleteNote(noteId);
-	};
-
-	const handleNoteEdit = (note: Note) => {
-		onEditNote(note);
-	};
-
-	const handleNoteView = (note: Note) => {
-		onNavigateToNote(note);
 	};
 
 	// Inline editing functions
@@ -149,20 +128,6 @@ const NoteList: React.FC<NoteListProps> = ({
 			content: note.content,
 			tags: [...note.tags]
 		});
-	};
-
-	const saveEdit = (note: Note) => {
-		if (editingState) {
-			const updatedNote = {
-				...note,
-				title: editValues.title,
-				content: editValues.content,
-				tags: editValues.tags,
-				updatedAt: new Date()
-			};
-			onEditNote(updatedNote);
-			setEditingState(null);
-		}
 	};
 
 	const cancelEdit = () => {
@@ -206,7 +171,7 @@ const NoteList: React.FC<NoteListProps> = ({
 
 	const renderNoteItem = (note: Note) => {
 		const hasChildren = note.children && note.children.length > 0;
-		const isExpanded = expandedNotes.has(note.id);
+		const isExpanded = note.isExpanded;
 		const childNotes = getChildNotes(note.id);
 		const displayDepth = note.level;
 		const isEditing = editingState?.noteId === note.id;

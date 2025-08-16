@@ -8,4 +8,5 @@ export interface Note {
   parentId?: string;
   children?: string[];
   level: number;
+  isExpanded: boolean;
 }

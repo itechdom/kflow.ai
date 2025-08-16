@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router';
 import { useAppSelector, useAppDispatch } from '../store/hooks';
-import { selectNote, deleteNote, addChildNote, createNote, editNote } from '../store/noteSlice';
+import { selectNote, deleteNote, addChildNote, createNote, editNote, toggleNoteExpanded, expandNote } from '../store/noteSlice';
 import { Note } from '../types/Note';
 import NoteList from './NoteList';
 import MindMap from './MindMap';
@@ -96,10 +96,6 @@ const NotePage: React.FC = () => {
     );
   }
 
-  const handleSaveNote = (updatedNote: Note) => {
-    dispatch(editNote(updatedNote));
-  };
-
   const handleNoteClick = (note: Note) => {
     navigate(`/note/${note.id}`);
   };
@@ -134,6 +130,14 @@ const NotePage: React.FC = () => {
 
   const handleEditNote = (note: Note) => {
     dispatch(editNote(note));
+  };
+
+  const handleToggleExpand = (noteId: string) => {
+    dispatch(toggleNoteExpanded(noteId));
+  };
+
+  const handleEnsureExpanded = (noteId: string) => {
+    dispatch(expandNote(noteId));
   };
 
   return (
@@ -210,6 +214,8 @@ const NotePage: React.FC = () => {
               showCreateButton={false}
               autoExpandParent={true}
               currentNoteId={currentNote.id}
+              onToggleExpand={handleToggleExpand}
+              onEnsureExpanded={handleEnsureExpanded}
             />
           )}
         </div>

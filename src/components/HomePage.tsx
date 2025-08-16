@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAppSelector, useAppDispatch } from '../store/hooks';
-import { selectNote, deleteNote, addChildNote, createNote, setSearchQuery, editNote } from '../store/noteSlice';
+import { selectNote, deleteNote, addChildNote, createNote, setSearchQuery, editNote, toggleNoteExpanded, expandNote } from '../store/noteSlice';
 import NoteList from './NoteList';
 import MindMap from './MindMap';
 import SearchBar from './SearchBar';
@@ -17,10 +17,10 @@ const HomePage: React.FC = () => {
   // Get state from Redux
   const { notes, selectedNote, searchQuery } = useAppSelector(state => state.notes);
 
-  const filteredNotes = notes.filter(note =>
-    note.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    note.content.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredNotes = notes.filter(note =>{
+    return !note.parentId && (note.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    note.content.toLowerCase().includes(searchQuery.toLowerCase()));
+});
 
   const handleNoteClick = (note: Note) => {
     // First select the note to ensure it's properly set in state
@@ -52,6 +52,14 @@ const HomePage: React.FC = () => {
   const handleEditNote = (note: Note) => {
     // Inline edits should only update the store, not navigate
     dispatch(editNote(note));
+  };
+
+  const handleToggleExpand = (noteId: string) => {
+    dispatch(toggleNoteExpanded(noteId));
+  };
+
+  const handleEnsureExpanded = (noteId: string) => {
+    dispatch(expandNote(noteId));
   };
 
   const handleSaveNote = (newNote: Note) => {
@@ -121,6 +129,8 @@ const HomePage: React.FC = () => {
               onCreateNote={handleCreateNote}
               onNavigateToNote={handleNoteClick}
               showFullContent={false}
+              onToggleExpand={handleToggleExpand}
+              onEnsureExpanded={handleEnsureExpanded}
             />
           )}
         </div>

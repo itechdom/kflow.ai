@@ -20,7 +20,8 @@ const initialState: NoteState = {
       tags: ['welcome', 'getting-started'],
       parentId: undefined,
       children: [],
-      level: 0
+      level: 0,
+      isExpanded: false
     },
     {
       id: '2',
@@ -31,7 +32,8 @@ const initialState: NoteState = {
       tags: ['guide', 'tutorial'],
       parentId: undefined,
       children: [],
-      level: 0
+      level: 0,
+      isExpanded: false
     },
     {
       id: '3',
@@ -42,7 +44,8 @@ const initialState: NoteState = {
       tags: ['organization', 'tips'],
       parentId: '2',
       children: [],
-      level: 1
+      level: 1,
+      isExpanded: false
     }
   ],
   selectedNote: null,
@@ -56,12 +59,13 @@ const noteSlice = createSlice({
   initialState,
   reducers: {
     // Create a new note
-    createNote: (state, action: PayloadAction<Omit<Note, 'id' | 'createdAt' | 'updatedAt'>>) => {
+    createNote: (state, action: PayloadAction<Omit<Note, 'id' | 'createdAt' | 'updatedAt' | 'isExpanded'>>) => {
       const newNote: Note = {
         ...action.payload,
         id: Date.now().toString(),
         createdAt: new Date(),
-        updatedAt: new Date()
+        updatedAt: new Date(),
+        isExpanded: false
       };
       state.notes.push(newNote);
       
@@ -72,6 +76,34 @@ const noteSlice = createSlice({
           parentNote.children = parentNote.children || [];
           parentNote.children.push(newNote.id);
         }
+      }
+    },
+
+    // Toggle isExpanded on a note; expanding updates updatedAt
+    toggleNoteExpanded: (state, action: PayloadAction<string>) => {
+      const note = state.notes.find(n => n.id === action.payload);
+      if (note) {
+        note.isExpanded = !note.isExpanded;
+        if (note.isExpanded) {
+          note.updatedAt = new Date();
+        }
+      }
+    },
+
+    // Ensure expanded and save
+    expandNote: (state, action: PayloadAction<string>) => {
+      const note = state.notes.find(n => n.id === action.payload);
+      if (note && !note.isExpanded) {
+        note.isExpanded = true;
+        note.updatedAt = new Date();
+      }
+    },
+
+    // Collapse a note
+    collapseNote: (state, action: PayloadAction<string>) => {
+      const note = state.notes.find(n => n.id === action.payload);
+      if (note) {
+        note.isExpanded = false;
       }
     },
 
@@ -133,7 +165,8 @@ const noteSlice = createSlice({
           tags: [],
           parentId: parentNote.id,
           children: [],
-          level: parentNote.level + 1
+          level: parentNote.level + 1,
+          isExpanded: false
         };
         
         state.notes.push(newChildNote);
@@ -170,6 +203,9 @@ export const {
   editNote,
   deleteNote,
   addChildNote,
+  toggleNoteExpanded,
+  expandNote,
+  collapseNote,
   setSearchQuery,
   clearSearch,
   setLoading,

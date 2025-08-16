@@ -41,7 +41,8 @@ const AIGenerator: React.FC<AIGeneratorProps> = ({ onGenerateNote }) => {
         createdAt: new Date(),
         updatedAt: new Date(),
         tags: data.tags || [],
-        level: 0
+        level: 0,
+        isExpanded: false
       };
 
       onGenerateNote(generatedNote);

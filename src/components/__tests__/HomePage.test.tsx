@@ -22,9 +22,9 @@ function renderWithProviders(ui: React.ReactElement, { preloadedState }: any = {
 const baseState = {
   notes: {
     notes: [
-      { id: '1', title: 'Root A', content: 'Content A', tags: [], parentId: undefined, children: [], level: 0, createdAt: new Date(), updatedAt: new Date() },
-      { id: '2', title: 'Root B', content: 'Content B', tags: [], parentId: undefined, children: [], level: 0, createdAt: new Date(), updatedAt: new Date() },
-      { id: '3', title: 'Child of A', content: 'Child C', tags: [], parentId: '1', children: [], level: 1, createdAt: new Date(), updatedAt: new Date() },
+      { id: '1', title: 'Root A', content: 'Content A', tags: [], parentId: undefined, children: [], level: 0, createdAt: new Date(), updatedAt: new Date(), isExpanded: false },
+      { id: '2', title: 'Root B', content: 'Content B', tags: [], parentId: undefined, children: [], level: 0, createdAt: new Date(), updatedAt: new Date(), isExpanded: false },
+      { id: '3', title: 'Child of A', content: 'Child C', tags: [], parentId: '1', children: [], level: 1, createdAt: new Date(), updatedAt: new Date(), isExpanded: false },
     ],
     selectedNote: null,
     searchQuery: '',

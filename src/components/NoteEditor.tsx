@@ -53,7 +53,8 @@ const NoteEditor: React.FC<NoteEditorProps> = ({
       children: [],
       level: 0,
       createdAt: new Date(),
-      updatedAt: new Date()
+      updatedAt: new Date(),
+      isExpanded: true
     };
 
     onSave(newNote);

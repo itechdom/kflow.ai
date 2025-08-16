@@ -25,8 +25,8 @@ function renderWithProvidersAndRouter(route: string, preloadedState: any) {
 const baseState = {
   notes: {
     notes: [
-      { id: 'n1', title: 'Parent Note', content: 'Parent content', tags: [], parentId: undefined, children: ['n2'], level: 0, createdAt: new Date(), updatedAt: new Date() },
-      { id: 'n2', title: 'Child Note', content: 'Child content', tags: [], parentId: 'n1', children: [], level: 1, createdAt: new Date(), updatedAt: new Date() },
+      { id: 'n1', title: 'Parent Note', content: 'Parent content', tags: [], parentId: undefined, children: ['n2'], level: 0, createdAt: new Date(), updatedAt: new Date(), isExpanded: false },
+      { id: 'n2', title: 'Child Note', content: 'Child content', tags: [], parentId: 'n1', children: [], level: 1, createdAt: new Date(), updatedAt: new Date(), isExpanded: false },
     ],
     selectedNote: null,
     searchQuery: '',
