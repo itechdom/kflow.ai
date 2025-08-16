@@ -13,6 +13,7 @@ interface NoteListProps {
 	onCreateNote: () => void;
 	onNavigateToNote: (note: Note) => void;
 	showCreateButton?: boolean;
+	showFullContent?: boolean;
 	autoExpandParent?: boolean;
 	currentNoteId?: string;
 }
@@ -32,6 +33,7 @@ const NoteList: React.FC<NoteListProps> = ({
 	onCreateNote,
 	onNavigateToNote,
 	showCreateButton = true,
+	showFullContent = true,
 	autoExpandParent = false,
 	currentNoteId
 }) => {
@@ -291,7 +293,7 @@ const NoteList: React.FC<NoteListProps> = ({
 							onClick={(e) => { e.stopPropagation(); startEditing(note, 'content'); }}
 							title="Click to edit content"
 						>
-							{note.content.length > 100 
+							{!showFullContent 
 								? `${note.content.substring(0, 100)}...` 
 								: note.content || 'No content'
 							}

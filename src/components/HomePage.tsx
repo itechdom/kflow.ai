@@ -120,6 +120,7 @@ const HomePage: React.FC = () => {
               onAddChildNote={handleAddChildNote}
               onCreateNote={handleCreateNote}
               onNavigateToNote={handleNoteClick}
+              showFullContent={false}
             />
           )}
         </div>
