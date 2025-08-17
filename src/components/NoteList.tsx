@@ -18,6 +18,7 @@ interface NoteListProps {
 	currentNoteId?: string;
 	onToggleExpand: (noteId: string) => void;
 	onEnsureExpanded?: (noteId: string) => void;
+	scrollTargetNote?: Note;
 }
 
 interface EditingState {
@@ -39,7 +40,8 @@ const NoteList: React.FC<NoteListProps> = ({
 	autoExpandParent = false,
 	currentNoteId,
 	onToggleExpand,
-	onEnsureExpanded
+	onEnsureExpanded,
+	scrollTargetNote
 }) => {
 	const [editingState, setEditingState] = useState<EditingState | null>(null);
 	const [editValues, setEditValues] = useState<{ title: string; content: string; tags: string[] }>({
@@ -48,6 +50,7 @@ const NoteList: React.FC<NoteListProps> = ({
 		tags: []
 	});
 	const [newTag, setNewTag] = useState('');
+	const noteRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
 	// Debounced autosave timer
 	const autoSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -78,6 +81,16 @@ const NoteList: React.FC<NoteListProps> = ({
 			}
 		}
 	}, [autoExpandParent, currentNoteId, selectedNote, notes, onEnsureExpanded]);
+
+	// Scroll to target note id when requested
+	useEffect(() => {
+		console.log("scrollTargetNoteId",scrollTargetNote);
+		if (!scrollTargetNote) return;
+		const el = noteRefs.current[scrollTargetNote.id];
+		if (el) {
+			el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+		}
+	}, [scrollTargetNote]);
 
 	const createNewNote = () => {
 		onCreateNote();
@@ -183,6 +196,7 @@ const NoteList: React.FC<NoteListProps> = ({
 			<div
 				key={note.id}
 				className={`note-item ${selectedNote?.id === note.id ? 'selected' : ''}`}
+				ref={(el) => { noteRefs.current[note.id] = el; }}
 				onClick={() => {
 					// Only navigate if it's a root note (no parent)
 					if (!note.parentId) {

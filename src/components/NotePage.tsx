@@ -14,18 +14,45 @@ const NotePage: React.FC = () => {
   const dispatch = useAppDispatch();
   const [viewMode, setViewMode] = useState<'list' | 'mindmap'>('list');
   const [searchQuery, setSearchQuery] = useState('');
+  const [scrollTargetNote, setScrollTargetNote] = useState<Note>();
   
   // Get state from Redux
   const { notes, selectedNote } = useAppSelector(state => state.notes);
 
   // Find the current note
   const currentNote = notes.find(note => note.id === noteId);
-   
-  // Filter notes based on search query
-  const filteredNotes = notes.filter(note =>
-    note.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    note.content.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+
+  // When searching in NotePage sidebar, if a unique match is found within the sidebar set,
+  // ensure it is expanded (and its ancestors), scroll to it, and select it
+  useEffect(() => {
+    if (!searchQuery.trim()) return;
+    // Consider matches within the sidebar scope
+    const sidebarIds = new Set(sidebarNotes.map(n => n.id));
+    const matches = notes.filter(n => sidebarIds.has(n.id) && (
+      n.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      n.content.toLowerCase().includes(searchQuery.toLowerCase())
+    ));
+    if (matches.length !== 1) return;
+    const match = matches[0];
+
+    // Expand ancestors up to root
+    const expandAncestors = (note: Note | undefined) => {
+      if (!note) return;
+      if (note.parentId) {
+        const parent = notes.find(n => n.id === note.parentId);
+        if (parent) {
+          dispatch(expandNote(parent.id));
+          expandAncestors(parent);
+        }
+      }
+    };
+    expandAncestors(match);
+    // Ensure matched note expanded and saved
+    dispatch(expandNote(match.id));
+    // Select and scroll
+    dispatch(selectNote(match));
+    setScrollTargetNote({...match});
+  }, [searchQuery]);
 
   // Auto-select current note if none selected
   useEffect(() => {
@@ -216,6 +243,7 @@ const NotePage: React.FC = () => {
               currentNoteId={currentNote.id}
               onToggleExpand={handleToggleExpand}
               onEnsureExpanded={handleEnsureExpanded}
+              scrollTargetNote={scrollTargetNote}
             />
           )}
         </div>
