@@ -130,7 +130,6 @@ const NotePage: React.FC = () => {
   };
 
   const handleNoteSelect = (note: Note) => {
-    console.log("NOTE SELECTED", note);
     dispatch(selectNote(note));
   };
 
