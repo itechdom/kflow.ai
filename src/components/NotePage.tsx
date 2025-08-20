@@ -50,7 +50,6 @@ const NotePage: React.FC = () => {
     // Ensure matched note expanded and saved
     dispatch(expandNote(match.id));
     // Select and scroll
-    dispatch(selectNote(match));
     setScrollTargetNote({...match});
   }, [searchQuery]);
 

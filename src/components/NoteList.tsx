@@ -50,7 +50,10 @@ const NoteList: React.FC<NoteListProps> = ({
 		tags: []
 	});
 	const [newTag, setNewTag] = useState('');
+	const [autoEditNoteId, setAutoEditNoteId] = useState<string | null>(null);
 	const noteRefs = useRef<Record<string, HTMLDivElement | null>>({});
+	const titleInputRefs = useRef<Record<string, HTMLInputElement | null>>({});
+	const contentTextareaRefs = useRef<Record<string, HTMLTextAreaElement | null>>({});
 
 	// Debounced autosave timer
 	const autoSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -64,12 +67,12 @@ const NoteList: React.FC<NoteListProps> = ({
 			updatedAt: new Date()
 		};
 
-		if (autoSaveTimerRef.current) {
-			clearTimeout(autoSaveTimerRef.current);
-		}
-		autoSaveTimerRef.current = setTimeout(() => {
+		// if (autoSaveTimerRef.current) {
+			// clearTimeout(autoSaveTimerRef.current);
+		// }
+		// autoSaveTimerRef.current = setTimeout(() => {
 			onEditNote(updatedNote);
-		}, 600);
+		// }, 600);
 	}, [editValues.title, editValues.content, editValues.tags, onEditNote]);
 
 	// Auto-expand parent note when child is selected
@@ -84,13 +87,31 @@ const NoteList: React.FC<NoteListProps> = ({
 
 	// Scroll to target note id when requested
 	useEffect(() => {
-		console.log("scrollTargetNoteId",scrollTargetNote);
 		if (!scrollTargetNote) return;
 		const el = noteRefs.current[scrollTargetNote.id];
 		if (el) {
 			el.scrollIntoView({ behavior: 'smooth', block: 'center' });
 		}
 	}, [scrollTargetNote]);
+
+	// Auto-edit newly created child notes
+	useEffect(() => {
+		if (autoEditNoteId) {
+			const parentNote = notes.find(note => note.id === autoEditNoteId);
+			if (parentNote && parentNote.children && parentNote.children.length > 0) {
+				// Find the most recently created child note (last in children array)
+				const lastChildId = parentNote.children[parentNote.children.length - 1];
+				const childNote = notes.find(note => note.id === lastChildId);
+				if (childNote && childNote.title === 'New Child Note') {
+					// Auto-start editing the title of this new child note
+					setTimeout(() => {
+						startEditing(childNote, 'title');
+						setAutoEditNoteId(null); // Reset after starting edit
+					}, 150); // Small delay to ensure the note is rendered and ref is set
+				}
+			}
+		}
+	}, [notes, autoEditNoteId]);
 
 	const createNewNote = () => {
 		onCreateNote();
@@ -100,6 +121,7 @@ const NoteList: React.FC<NoteListProps> = ({
 		// Ensure parent is expanded and saved
 		onEnsureExpanded && onEnsureExpanded(parentNote.id);
 		onAddChildNote(parentNote);
+		setAutoEditNoteId(parentNote.id);
 	};
 
 	const formatDate = (date: Date) => {
@@ -141,6 +163,24 @@ const NoteList: React.FC<NoteListProps> = ({
 			content: note.content,
 			tags: [...note.tags]
 		});
+
+		// Auto-focus title input for newly created child notes
+		if (field === 'title' && note.title === 'New Child Note') {
+			setTimeout(() => {
+				if (titleInputRefs.current[note.id]) {
+					titleInputRefs.current[note.id]?.focus();
+					titleInputRefs.current[note.id]?.select(); // Select all text for easy replacement
+				}
+			}, 50);
+		}
+		else if(field === 'content' && note.content === 'Add your content here...'){
+			setTimeout(() => {
+				if(contentTextareaRefs.current[note.id]){
+					contentTextareaRefs.current[note.id]?.focus();
+					contentTextareaRefs.current[note.id]?.select(); // Select all text for easy replacement
+				}
+			},50);
+		}
 	};
 
 	const cancelEdit = () => {
@@ -169,6 +209,45 @@ const NoteList: React.FC<NoteListProps> = ({
 		}
 	};
 
+	const handleTitleKeyDown = (e: React.KeyboardEvent, note: Note) => {
+		if (e.key === 'Tab') {
+			e.preventDefault();
+			if (e.shiftKey) {
+				// Shift+Tab: close edit mode (no previous field)
+				cancelEdit();
+			} else {
+				// Tab: start editing content field
+				startEditing(note, 'content');
+			}
+		}
+	};
+
+	const handleContentKeyDown = (e: React.KeyboardEvent, note: Note) => {
+		if (e.key === 'Tab') {
+			e.preventDefault();
+			if (e.shiftKey) {
+				// Shift+Tab: go back to title field
+				startEditing(note, 'title');
+			} else {
+				// Tab: start editing tags field
+				startEditing(note, 'tags');
+			}
+		}
+	};
+
+	const handleTagInputKeyDown = (e: React.KeyboardEvent, note: Note) => {
+		if (e.key === 'Tab') {
+			e.preventDefault();
+			if (e.shiftKey) {
+				// Shift+Tab: go back to content field
+				startEditing(note, 'content');
+			} else {
+				// Tab: close edit mode (end of navigation cycle)
+				cancelEdit();
+			}
+		}
+	};
+
 	const handleGenerateNote = (generatedNote: Note) => {
 		if (selectedNote) {
 			const updatedNote = {
@@ -191,11 +270,12 @@ const NoteList: React.FC<NoteListProps> = ({
 		const isEditingTitle = isEditing && editingState?.field === 'title';
 		const isEditingContent = isEditing && editingState?.field === 'content';
 		const isEditingTags = isEditing && editingState?.field === 'tags';
+		const isNewChildNote = note.title === 'New Child Note' && note.content === 'Add your content here...';
 
 		return (
 			<div
 				key={note.id}
-				className={`note-item ${selectedNote?.id === note.id ? 'selected' : ''}`}
+				className={`note-item ${selectedNote?.id === note.id ? 'selected' : ''} ${isNewChildNote ? 'new-child-note' : ''}`}
 				ref={(el) => { noteRefs.current[note.id] = el; }}
 				onClick={() => {
 					// Only navigate if it's a root note (no parent)
@@ -226,8 +306,9 @@ const NoteList: React.FC<NoteListProps> = ({
 						{isEditingTitle ? (
 							<div className="inline-edit-container" onClick={(e) => e.stopPropagation()}>
 								<input
+									ref={(el) => { titleInputRefs.current[note.id] = el; }}
 									type="text"
-									className="inline-edit-input title-input"
+									className={`inline-edit-input title-input ${isNewChildNote ? 'new-child-note-input' : ''}`}
 									value={editValues.title}
 									onChange={(e) => {
 										const newTitle = e.target.value;
@@ -236,6 +317,10 @@ const NoteList: React.FC<NoteListProps> = ({
 									}}
 									onBlur={() => cancelEdit()}
 									autoFocus
+									placeholder={isNewChildNote ? "Enter note title... (Tab → content)" : "Tab → content"}
+									onKeyDown={(e) => {
+										handleTitleKeyDown(e, note);
+									}}
 								/>
 							</div>
 						) : (
@@ -264,6 +349,11 @@ const NoteList: React.FC<NoteListProps> = ({
 								rows={4}
 								onBlur={() => cancelEdit()}
 								autoFocus
+								ref={(el) => { 
+									contentTextareaRefs.current[note.id] = el; 
+								}}
+								onKeyDown={(e) => handleContentKeyDown(e, note)}
+								placeholder="Tab → tags, Shift+Tab → title"
 							/>
 						</div>
 					) : (
@@ -305,6 +395,7 @@ const NoteList: React.FC<NoteListProps> = ({
 											queueAutoSave(note, { tags: editValues.tags });
 										}}
 										onKeyPress={(e) => handleKeyPress(e, note)}
+										onKeyDown={(e) => handleTagInputKeyDown(e, note)}
 										placeholder="Add a tag..."
 									/>
 									<button
