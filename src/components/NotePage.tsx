@@ -62,6 +62,7 @@ const NotePage: React.FC = () => {
     }
   }, [currentNote, selectedNote, dispatch]);
 
+  //TODO: move this to the store
   // Get notes to display in sidebar - only the selected note and its hierarchy
   const getNotesForSidebar = (): Note[] => {
     if (!selectedNote) return [];
@@ -80,10 +81,10 @@ const NotePage: React.FC = () => {
       }
     };
     
-    // Add the full path from root to selected note
+    // Add the full path from root to current note
     addParentPath(currentNote?.id || '');
     
-    // Then add all children of the selected note
+    // Then add all children of the current note
     const addChildren = (parentId: string) => {
       const children = notes.filter(note => note.parentId === parentId);
       children.forEach(child => {
