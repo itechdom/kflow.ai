@@ -64,9 +64,11 @@ describe('HomePage', () => {
 
   test('navigates to NotePage when clicking a root note card area', () => {
     renderWithProviders(<HomePage />, { preloadedState: baseState });
-    // Clicking root title should navigate - since BrowserRouter is used, assert URL change
-    const rootTitle = screen.getByText('Root A');
-    fireEvent.click(rootTitle);
+    // Clicking the note item container should navigate - since BrowserRouter is used, assert URL change
+    // We need to click on the note-item div, not the title text (which has its own click handler for editing)
+    const noteItem = screen.getByText('Root A').closest('.note-item');
+    expect(noteItem).toBeInTheDocument();
+    fireEvent.click(noteItem!);
     expect(window.location.pathname).toMatch(/\/note\/1$/);
   });
 });

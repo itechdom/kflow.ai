@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 import { useAppSelector, useAppDispatch } from '../store/hooks';
 import { selectNote, deleteNote, addChildNote, createNote, setSearchQuery, editNote, toggleNoteExpanded, expandNote } from '../store/noteSlice';
 import NoteList from './NoteList';
