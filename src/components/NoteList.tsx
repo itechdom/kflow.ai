@@ -277,8 +277,10 @@ const NoteList: React.FC<NoteListProps> = ({
 				key={note.id}
 				className={`note-item ${selectedNote?.id === note.id ? 'selected' : ''} ${isNewChildNote ? 'new-child-note' : ''}`}
 				ref={(el) => { noteRefs.current[note.id] = el; }}
-				onClick={() => {
+				onClick={(e) => {
+					e.stopPropagation();
 					// Only navigate if it's a root note (no parent)
+					onSelectNote(note);
 					if (!note.parentId) {
 						onNavigateToNote(note);
 					}

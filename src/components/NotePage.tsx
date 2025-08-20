@@ -130,6 +130,7 @@ const NotePage: React.FC = () => {
   };
 
   const handleNoteSelect = (note: Note) => {
+    console.log("NOTE SELECTED", note);
     dispatch(selectNote(note));
   };
 
@@ -228,7 +229,7 @@ const NotePage: React.FC = () => {
               onEditNote={handleEditNote}
               onCreateNote={handleCreateNote}
               onAddChildNote={handleAddChildNote}
-              onNavigateToNote={handleNoteClick}
+              onNavigateToNote={handleNoteSelect}
             />
           ) : (
             <NoteList 
