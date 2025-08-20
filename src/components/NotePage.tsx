@@ -7,6 +7,7 @@ import NoteList from './NoteList';
 import MindMap from './MindMap';
 import SearchBar from './SearchBar';
 import { ArrowLeft, List, Map } from 'lucide-react';
+import { current } from '@reduxjs/toolkit';
 
 const NotePage: React.FC = () => {
   const { noteId } = useParams<{ noteId: string }>();
@@ -50,6 +51,7 @@ const NotePage: React.FC = () => {
     // Ensure matched note expanded and saved
     dispatch(expandNote(match.id));
     // Select and scroll
+    dispatch(selectNote(match));
     setScrollTargetNote({...match});
   }, [searchQuery]);
 
@@ -79,7 +81,7 @@ const NotePage: React.FC = () => {
     };
     
     // Add the full path from root to selected note
-    addParentPath(selectedNote.id);
+    addParentPath(currentNote?.id || '');
     
     // Then add all children of the selected note
     const addChildren = (parentId: string) => {
@@ -90,7 +92,7 @@ const NotePage: React.FC = () => {
       });
     };
     
-    addChildren(selectedNote.id);
+    addChildren(currentNote?.id || '');
     return notesToShow;
   };
 
