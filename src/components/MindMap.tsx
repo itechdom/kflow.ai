@@ -60,6 +60,7 @@ const MindMap: React.FC<MindMapProps> = ({
   const [showContentModal, setShowContentModal] = useState(false);
   const [editingNote, setEditingNote] = useState<Note | null>(null);
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number; note: Note } | null>(null);
+  const [isTreeContainerFocused, setIsTreeContainerFocused] = useState(false);
 
   // Update container dimensions
   useEffect(() => {
@@ -153,13 +154,18 @@ const MindMap: React.FC<MindMapProps> = ({
   // Keyboard shortcuts
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      // Only handle keyboard shortcuts when tree container is focused
+      if (!isTreeContainerFocused) return;
+      
       if (e.ctrlKey && e.key === 'e' && selectedNote) {
         e.preventDefault();
         openContentEditor(selectedNote);
       }
       if(e.key === 'Tab') {
         e.preventDefault();
-        handleAddChildNote(selectedNote!);
+        if (selectedNote) {
+          handleAddChildNote(selectedNote);
+        }
       }
       if(e.key === 'Backspace') {
         //check if editing is on, if so don't delete note
@@ -167,13 +173,15 @@ const MindMap: React.FC<MindMapProps> = ({
           return;
         }
         e.preventDefault();
-        onDeleteNote(selectedNote!.id);
+        if (selectedNote && selectedNote.parentId !== undefined) {
+          onDeleteNote(selectedNote.id);
+        }
       }
     };
 
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [selectedNote, editingState, openContentEditor]);
+  }, [selectedNote, editingState, openContentEditor, isTreeContainerFocused, handleAddChildNote, onDeleteNote]);
 
   	// Auto-edit newly created child notes
 	useEffect(() => {
@@ -559,7 +567,7 @@ const MindMap: React.FC<MindMapProps> = ({
         </div>
         <div className="controls">
           <div className="edit-hint">
-            <span className="hint-text">💡 Double-click nodes to edit titles • Click blue edit button inside nodes for content • Green clip icon = has content • Right-click for menu • Ctrl+E to edit content</span>
+            <span className="hint-text">💡 Click on the tree area to enable keyboard shortcuts • Double-click nodes to edit titles • Click blue edit button inside nodes for content • Green clip icon = has content • Right-click for menu • Ctrl+E to edit content</span>
           </div>
           <div className="zoom-controls">
             <button 
@@ -591,7 +599,12 @@ const MindMap: React.FC<MindMapProps> = ({
           </button>
         </div>
       ) : (
-        <div className="tree-container">
+        <div 
+          className={`tree-container ${isTreeContainerFocused ? 'focused' : ''}`}
+          tabIndex={0}
+          onFocus={() => setIsTreeContainerFocused(true)}
+          onBlur={() => setIsTreeContainerFocused(false)}
+        >
           <svg width={containerWidth} height={containerHeight}>
             {renderConnections()}
             {filteredNodes.map(renderNode)}
