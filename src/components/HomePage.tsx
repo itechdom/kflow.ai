@@ -11,7 +11,6 @@ import { Note } from '../types/Note';
 const HomePage: React.FC = () => {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
-  const [viewMode, setViewMode] = useState<'mindmap' | 'list'>('list');
   const [showCreateModal, setShowCreateModal] = useState(false);
   
   // Get state from Redux
@@ -98,27 +97,10 @@ const HomePage: React.FC = () => {
 
       <main className="App-main">
         <div className="full-width-content">
-          <div className="view-toggle">
-            <button className={`toggle-btn ${viewMode === 'list' ? 'active' : ''}`} onClick={() => setViewMode('list')}>📝 List View</button>
-            <button className={`toggle-btn ${viewMode === 'mindmap' ? 'active' : ''}`} onClick={() => setViewMode('mindmap')}>🗺️ Mind Map</button>
-          </div>
-
           <SearchBar
             searchQuery={searchQuery}
             onSearchChange={handleSearchChange}
           />          
-          {viewMode === 'mindmap' ? (
-            <MindMap
-              notes={filteredNotes}
-              selectedNote={selectedNote}
-              onSelectNote={handleSelectNote}
-              onDeleteNote={handleDeleteNote}
-              onEditNote={handleEditNote}
-              onCreateNote={handleCreateNote}
-              onAddChildNote={handleAddChildNote}
-              onNavigateToNote={handleNoteClick}
-            />
-          ) : (
             <NoteList 
               notes={filteredNotes}
               selectedNote={selectedNote}
@@ -131,8 +113,8 @@ const HomePage: React.FC = () => {
               showFullContent={false}
               onToggleExpand={handleToggleExpand}
               onEnsureExpanded={handleEnsureExpanded}
+              displayMode={'card'}
             />
-          )}
         </div>
       </main>
 

@@ -1,7 +1,9 @@
 import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { Note } from '../types/Note';
-import { Trash2, Plus, ChevronRight, ChevronDown, X } from 'lucide-react';
+import { Plus } from 'lucide-react';
 import AIGenerator from './AIGenerator';
+import NoteListItem from './NoteListItem';
+import NoteListCard from './NoteListCard';
 
 interface NoteListProps {
 	notes: Note[];
@@ -19,6 +21,7 @@ interface NoteListProps {
 	onToggleExpand: (noteId: string) => void;
 	onEnsureExpanded?: (noteId: string) => void;
 	scrollTargetNote?: Note;
+	displayMode?: 'list' | 'card';
 }
 
 interface EditingState {
@@ -41,7 +44,8 @@ const NoteList: React.FC<NoteListProps> = ({
 	currentNoteId,
 	onToggleExpand,
 	onEnsureExpanded,
-	scrollTargetNote
+	scrollTargetNote,
+	displayMode = 'list'
 }) => {
 	const [editingState, setEditingState] = useState<EditingState | null>(null);
 	const [editValues, setEditValues] = useState<{ title: string; content: string; tags: string[] }>({
@@ -140,6 +144,85 @@ const NoteList: React.FC<NoteListProps> = ({
 
 	const getRootNotes = (): Note[] => {
 		return notesWithChildren.filter(note => !note.parentId);
+	};
+
+	const renderNoteItem = (note: Note) => {
+		if (displayMode === 'card') {
+			return (
+				<NoteListCard
+					key={note.id}
+					note={note}
+					selectedNote={selectedNote}
+					editingState={editingState}
+					editValues={editValues}
+					newTag={newTag}
+					noteRefs={noteRefs}
+					titleInputRefs={titleInputRefs}
+					contentTextareaRefs={contentTextareaRefs}
+					tagsContainerRef={tagsContainerRef}
+					showFullContent={showFullContent}
+					onSelectNote={onSelectNote}
+					onDeleteNote={onDeleteNote}
+					onEditNote={onEditNote}
+					onAddChildNote={onAddChildNote}
+					onNavigateToNote={onNavigateToNote}
+					onToggleExpand={onToggleExpand}
+					startEditing={startEditing}
+					cancelEdit={cancelEdit}
+					queueAutoSave={queueAutoSave}
+					handleAddTag={handleAddTag}
+					handleRemoveTag={handleRemoveTag}
+					handleKeyPress={handleKeyPress}
+					handleContentKeyDown={handleContentKeyDown}
+					handleTagInputKeyDown={handleTagInputKeyDown}
+					createChildNote={createChildNote}
+					handleNoteDelete={handleNoteDelete}
+					formatDate={formatDate}
+					getChildNotes={getChildNotes}
+					renderNoteItem={renderNoteItem}
+					setEditValues={setEditValues}
+					setNewTag={setNewTag}
+				/>
+			);
+		}
+
+		return (
+			<NoteListItem
+				key={note.id}
+				note={note}
+				selectedNote={selectedNote}
+				editingState={editingState}
+				editValues={editValues}
+				newTag={newTag}
+				noteRefs={noteRefs}
+				titleInputRefs={titleInputRefs}
+				contentTextareaRefs={contentTextareaRefs}
+				tagsContainerRef={tagsContainerRef}
+				showFullContent={showFullContent}
+				onSelectNote={onSelectNote}
+				onDeleteNote={onDeleteNote}
+				onEditNote={onEditNote}
+				onAddChildNote={onAddChildNote}
+				onNavigateToNote={onNavigateToNote}
+				onToggleExpand={onToggleExpand}
+				startEditing={startEditing}
+				cancelEdit={cancelEdit}
+				queueAutoSave={queueAutoSave}
+				handleAddTag={handleAddTag}
+				handleRemoveTag={handleRemoveTag}
+				handleKeyPress={handleKeyPress}
+				handleTitleKeyDown={handleTitleKeyDown}
+				handleContentKeyDown={handleContentKeyDown}
+				handleTagInputKeyDown={handleTagInputKeyDown}
+				createChildNote={createChildNote}
+				handleNoteDelete={handleNoteDelete}
+				formatDate={formatDate}
+				getChildNotes={getChildNotes}
+				renderNoteItem={renderNoteItem}
+				setEditValues={setEditValues}
+				setNewTag={setNewTag}
+			/>
+		);
 	};
 
 	const handleNoteDelete = (noteId: string) => {
@@ -252,221 +335,6 @@ const NoteList: React.FC<NoteListProps> = ({
 		}
 	};
 
-	const renderNoteItem = (note: Note) => {
-		const hasChildren = note.children && note.children.length > 0;
-		const isExpanded = note.isExpanded;
-		const childNotes = getChildNotes(note.id);
-		const displayDepth = note.level;
-		const isEditing = editingState?.noteId === note.id;
-		const isEditingTitle = isEditing && editingState?.field === 'title';
-		const isEditingContent = isEditing && editingState?.field === 'content';
-		const isEditingTags = isEditing && editingState?.field === 'tags';
-		const isNewChildNote = note.title === 'New Child Note' && note.content === 'Add your content here...';
-
-		return (
-			<div
-				key={note.id}
-				className={`note-item ${selectedNote?.id === note.id ? 'selected' : ''} ${isNewChildNote ? 'new-child-note' : ''}`}
-				ref={(el) => { noteRefs.current[note.id] = el; }}
-				onClick={(e) => {
-					e.stopPropagation();
-					// Only navigate if it's a root note (no parent)
-					onSelectNote(note);
-					if (!note.parentId) {
-						onNavigateToNote(note);
-					}
-				}}
-				style={{ 
-					marginLeft: `${displayDepth * 20}px`,
-					cursor: !note.parentId ? 'pointer' : 'default'
-				}}
-			>
-				<div className="note-item-content">
-					<div className="note-header-row">
-						{hasChildren && (
-							<button
-								className="expand-btn"
-								onClick={(e) => {
-									e.stopPropagation();
-									toggleExpanded(note.id);
-								}}
-								title={isExpanded ? 'Collapse' : 'Expand'}
-							>
-								{isExpanded ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
-							</button>
-						)}
-						
-						{isEditingTitle ? (
-							<div className="inline-edit-container" onClick={(e) => e.stopPropagation()}>
-								<input
-									ref={(el) => { titleInputRefs.current[note.id] = el; }}
-									type="text"
-									className={`inline-edit-input title-input ${isNewChildNote ? 'new-child-note-input' : ''}`}
-									value={editValues.title}
-									onChange={(e) => {
-										const newTitle = e.target.value;
-										setEditValues({ ...editValues, title: newTitle });
-										queueAutoSave(note, { title: newTitle });
-									}}
-									onBlur={() => cancelEdit()}
-									autoFocus
-									placeholder={isNewChildNote ? "Enter note title... (Tab → content)" : "Tab → content"}
-									onKeyDown={(e) => {
-										handleTitleKeyDown(e, note);
-									}}
-								/>
-							</div>
-						) : (
-							<h4 
-								className="note-title clickable"
-								onClick={(e) => { e.stopPropagation(); startEditing(note, 'title'); }}
-								title="Click to edit title"
-							>
-								{note.title}
-							</h4>
-						)}
-						
-						<span className="note-level">L{note.level}</span>
-					</div>
-					
-					{isEditingContent ? (
-						<div className="inline-edit-container" onClick={(e) => e.stopPropagation()}>
-							<textarea
-								className="inline-edit-textarea content-textarea"
-								value={editValues.content}
-								onChange={(e) => {
-									const newContent = e.target.value;
-									setEditValues({ ...editValues, content: newContent });
-									queueAutoSave(note, { content: newContent });
-								}}
-								rows={4}
-								onBlur={() => cancelEdit()}
-								autoFocus
-								ref={(el) => { 
-									contentTextareaRefs.current[note.id] = el; 
-								}}
-								onKeyDown={(e) => handleContentKeyDown(e, note)}
-								placeholder="Tab → tags, Shift+Tab → title"
-							/>
-						</div>
-					) : (
-						<p 
-							className="note-preview clickable"
-							onClick={(e) => { e.stopPropagation(); startEditing(note, 'content'); }}
-							title="Click to edit content"
-						>
-							{!showFullContent 
-								? `${note.content.substring(0, 100)}...` 
-								: note.content || 'No content'
-							}
-						</p>
-					)}
-					
-					<div className="note-meta">
-						<span className="note-date">{formatDate(note.updatedAt)}</span>
-						
-						{isEditingTags ? (
-							<div
-								className="inline-edit-container tags-edit"
-								ref={tagsContainerRef}
-								onClick={(e) => e.stopPropagation()}
-								onBlur={(e) => {
-									const next = e.relatedTarget as Node | null;
-									if (!next || (tagsContainerRef.current && !tagsContainerRef.current.contains(next))) {
-										cancelEdit();
-									}
-								}}
-							>
-								<div className="tags-input-container">
-									<input
-										type="text"
-										className="tag-input"
-										value={newTag}
-										onChange={(e) => {
-											setNewTag(e.target.value);
-											// Autosave on typing in tag input (saving current tags state)
-											queueAutoSave(note, { tags: editValues.tags });
-										}}
-										onKeyPress={(e) => handleKeyPress(e, note)}
-										onKeyDown={(e) => handleTagInputKeyDown(e, note)}
-										placeholder="Add a tag..."
-									/>
-									<button
-										className="add-tag-btn"
-										onMouseDown={(e) => e.preventDefault()}
-										onClick={() => handleAddTag(note)}
-									>
-										<Plus size={12} />
-									</button>
-								</div>
-								<div className="tags-display">
-									{editValues.tags.map(tag => (
-										<span key={tag} className="tag">
-											#{tag}
-											<button
-												className="remove-tag-btn"
-												onMouseDown={(e) => e.preventDefault()}
-												onClick={() => handleRemoveTag(note, tag)}
-											>
-												<X size={10} />
-											</button>
-										</span>
-									))}
-								</div>
-							</div>
-						) : (
-							<div 
-								className="note-tags clickable"
-								onClick={(e) => { e.stopPropagation(); startEditing(note, 'tags'); }}
-								title="Click to edit tags"
-							>
-								{note.tags.length > 0 ? (
-									<>
-										{note.tags.slice(0, 3).map(tag => (
-											<span key={tag} className="tag">#{tag}</span>
-										))}
-										{note.tags.length > 3 && <span className="more-tags">+{note.tags.length - 3}</span>}
-									</>
-								) : (
-									<span className="no-tags">Click to add tags</span>
-								)}
-							</div>
-						)}
-					</div>
-				</div>
-				
-				<div className="note-actions">
-					<button
-						className="action-btn add-child-btn"
-						onClick={(e) => {
-							e.stopPropagation();
-							createChildNote(note);
-						}}
-						title="Add child note"
-					>
-						<Plus size={14} />
-					</button>
-					<button
-						className="action-btn delete-btn"
-						onClick={(e) => {
-							e.stopPropagation();
-							handleNoteDelete(note.id);
-						}}
-						title="Delete note"
-					>
-						<Trash2 size={14} />
-					</button>
-				</div>
-				
-				{hasChildren && isExpanded && (
-					<div className="child-notes">
-						{childNotes.map(childNote => renderNoteItem(childNote))}
-					</div>
-				)}
-			</div>
-		);
-	};
-
 	return (
 		<div className="note-list">
 			<div className="note-list-header">
@@ -494,7 +362,7 @@ const NoteList: React.FC<NoteListProps> = ({
 				)}
 			</div>
 			
-			<div className="notes-container">
+			<div className={`notes-container ${displayMode === 'card' ? 'notes-grid' : ''}`}>
 				{notes.length === 0 ? (
 					<div className="empty-state">
 						<p>No notes yet</p>
