@@ -49,6 +49,7 @@ const MindMap: React.FC<MindMapProps> = ({
   const [pan, setPan] = useState({ x: 0, y: 0 });
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
+  const [autoEditNoteId, setAutoEditNoteId] = useState<string | null>(null);
   
   // Editing state
   const [editingState, setEditingState] = useState<EditingState | null>(null);
@@ -127,6 +128,12 @@ const MindMap: React.FC<MindMapProps> = ({
     }
   }, [notes]);
 
+  const handleAddChildNote = useCallback((note: Note) => {
+    onAddChildNote(note);
+    setContextMenu(null);
+    setAutoEditNoteId(note.id);
+  }, [notes, onAddChildNote]);
+
   // Open content editor
   const openContentEditor = useCallback((note: Note) => {
     setEditingNote(note);
@@ -150,11 +157,42 @@ const MindMap: React.FC<MindMapProps> = ({
         e.preventDefault();
         openContentEditor(selectedNote);
       }
+      if(e.key === 'Tab') {
+        e.preventDefault();
+        handleAddChildNote(selectedNote!);
+      }
+      if(e.key === 'Backspace') {
+        //check if editing is on, if so don't delete note
+        if(editingState) {
+          return;
+        }
+        e.preventDefault();
+        onDeleteNote(selectedNote!.id);
+      }
     };
 
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, [selectedNote, openContentEditor]);
+
+  	// Auto-edit newly created child notes
+	useEffect(() => {
+		if (autoEditNoteId) {
+			const parentNote = notes.find(note => note.id === autoEditNoteId);
+			if (parentNote && parentNote.children && parentNote.children.length > 0) {
+				// Find the most recently created child note (last in children array)
+				const lastChildId = parentNote.children[parentNote.children.length - 1];
+				const childNote = notes.find(note => note.id === lastChildId);
+				if (childNote && childNote.title === 'New Child Note') {
+					// Auto-start editing the title of this new child note
+					setTimeout(() => {
+						startEditing(childNote, 'title');
+						setAutoEditNoteId(null); // Reset after starting edit
+					}, 150); // Small delay to ensure the note is rendered and ref is set
+				}
+			}
+		}
+	}, [notes, autoEditNoteId]);
 
   // Editing functions
   const startEditing = useCallback((note: Note, field: 'title' | 'content') => {
@@ -455,7 +493,7 @@ const MindMap: React.FC<MindMapProps> = ({
                   border: '1px solid rgba(34, 197, 94, 0.3)'
                 }}
               >
-                <Paperclip size={10} color="#22c55e" />
+                <Paperclip onClick={() => openContentEditor(note)} size={10} color="#22c55e" />
               </div>
             </div>
           </foreignObject>
@@ -609,7 +647,7 @@ const MindMap: React.FC<MindMapProps> = ({
             <Edit2 size={14} />
             Edit Content
           </div>
-          <div className="context-menu-item" onClick={() => onAddChildNote(contextMenu.note)}>
+          <div className="context-menu-item" onClick={() => handleAddChildNote(contextMenu.note)}>
             <Plus size={14} />
             Add Child
           </div>
