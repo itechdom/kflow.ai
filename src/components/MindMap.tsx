@@ -1,6 +1,6 @@
 import React, { useCallback, useMemo, useRef, useState, useEffect } from 'react';
 import { Note } from '../types/Note';
-import { Plus, Eye } from 'lucide-react';
+import { Plus, Eye, Edit2, X } from 'lucide-react';
 
 interface MindMapProps {
   notes: Note[];
@@ -25,6 +25,11 @@ interface TreeNode {
   parentId?: string;
 }
 
+interface EditingState {
+  noteId: string;
+  field: 'title' | 'content';
+}
+
 const MindMap: React.FC<MindMapProps> = ({
   notes,
   selectedNote,
@@ -44,6 +49,16 @@ const MindMap: React.FC<MindMapProps> = ({
   const [pan, setPan] = useState({ x: 0, y: 0 });
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
+  
+  // Editing state
+  const [editingState, setEditingState] = useState<EditingState | null>(null);
+  const [editValues, setEditValues] = useState<{ title: string; content: string }>({
+    title: '',
+    content: ''
+  });
+  const [showContentModal, setShowContentModal] = useState(false);
+  const [editingNote, setEditingNote] = useState<Note | null>(null);
+  const [contextMenu, setContextMenu] = useState<{ x: number; y: number; note: Note } | null>(null);
 
   // Update container dimensions
   useEffect(() => {
@@ -56,6 +71,13 @@ const MindMap: React.FC<MindMapProps> = ({
     updateDimensions();
     window.addEventListener('resize', updateDimensions);
     return () => window.removeEventListener('resize', updateDimensions);
+  }, []);
+
+  // Close context menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = () => setContextMenu(null);
+    document.addEventListener('click', handleClickOutside);
+    return () => document.removeEventListener('click', handleClickOutside);
   }, []);
 
   // Handle mouse wheel zoom
@@ -89,10 +111,90 @@ const MindMap: React.FC<MindMapProps> = ({
     setIsDragging(false);
   }, []);
 
+  // Handle right-click for context menu
+  const handleNodeRightClick = useCallback((e: React.MouseEvent, node: TreeNode) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (node.id === 'virtual-root') return;
+    
+    const note = notes.find(n => n.id === node.id);
+    if (note) {
+      setContextMenu({
+        x: e.clientX,
+        y: e.clientY,
+        note
+      });
+    }
+  }, [notes]);
+
+  // Open content editor
+  const openContentEditor = useCallback((note: Note) => {
+    setEditingNote(note);
+    setEditValues({
+      title: note.title,
+      content: note.content
+    });
+    setShowContentModal(true);
+    setContextMenu(null);
+  }, []);
+
   // Handle mouse leave for panning
   const handleMouseLeave = useCallback(() => {
     setIsDragging(false);
   }, []);
+
+  // Keyboard shortcuts
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.ctrlKey && e.key === 'e' && selectedNote) {
+        e.preventDefault();
+        openContentEditor(selectedNote);
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [selectedNote, openContentEditor]);
+
+  // Editing functions
+  const startEditing = useCallback((note: Note, field: 'title' | 'content') => {
+    setEditingState({ noteId: note.id, field });
+    setEditValues({
+      title: note.title,
+      content: note.content
+    });
+    
+    if (field === 'content') {
+      setEditingNote(note);
+      setShowContentModal(true);
+    }
+  }, []);
+
+  const cancelEdit = useCallback(() => {
+    setEditingState(null);
+    setEditValues({ title: '', content: '' });
+  }, []);
+
+  const saveEdit = useCallback((note: Note) => {
+    const updatedNote = {
+      ...note,
+      title: editValues.title,
+      content: editValues.content,
+      updatedAt: new Date()
+    };
+    onEditNote(updatedNote);
+    cancelEdit();
+  }, [editValues.title, editValues.content, onEditNote, cancelEdit]);
+
+  const handleTitleKeyDown = useCallback((e: React.KeyboardEvent, note: Note) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      saveEdit(note);
+    } else if (e.key === 'Escape') {
+      e.preventDefault();
+      cancelEdit();
+    }
+  }, [saveEdit, cancelEdit]);
 
   // Prepare tree data from notes
   const treeData = useMemo(() => {
@@ -224,6 +326,8 @@ const MindMap: React.FC<MindMapProps> = ({
     const isSelected = selectedNote?.id === node.id;
     const isHovered = hoveredNode?.id === node.id;
     const isFiltered = searchQuery ? node.title.toLowerCase().includes(searchQuery.toLowerCase()) : true;
+    const isEditingTitle = editingState?.noteId === node.id && editingState?.field === 'title';
+    const note = notes.find(n => n.id === node.id);
 
     if (!isFiltered && node.id !== 'virtual-root') return null; // Hide if not filtered and not virtual root
 
@@ -239,8 +343,15 @@ const MindMap: React.FC<MindMapProps> = ({
         transform={`translate(${transformedX}, ${transformedY})`}
         className={`mindmap-node ${isSelected ? 'selected' : ''} ${isHovered ? 'hovered' : ''}`}
         onClick={() => handleNodeClick(node)}
+        onDoubleClick={(e) => {
+          e.stopPropagation();
+          if (note && node.id !== 'virtual-root') {
+            startEditing(note, 'title');
+          }
+        }}
         onMouseEnter={() => handleNodeHover(node)}
         onMouseLeave={() => handleNodeHover(null)}
+        onContextMenu={(e) => handleNodeRightClick(e, node)}
       >
         <rect
           x="0"
@@ -251,16 +362,43 @@ const MindMap: React.FC<MindMapProps> = ({
           ry="8"
           className="node-rect"
         />
-        <text
-          x={transformedWidth / 2}
-          y={transformedHeight / 2}
-          textAnchor="middle"
-          dominantBaseline="middle"
-          className="node-text"
-          style={{ fontSize: `${12 * zoom}px` }}
-        >
-          {node.title}
-        </text>
+        
+        {isEditingTitle ? (
+          <foreignObject x="5" y="15" width={transformedWidth - 10} height="30">
+            <div style={{ width: '100%', height: '100%' }}>
+              <input
+                type="text"
+                value={editValues.title}
+                onChange={(e) => setEditValues({ ...editValues, title: e.target.value })}
+                onKeyDown={(e) => handleTitleKeyDown(e, note!)}
+                onBlur={() => saveEdit(note!)}
+                style={{
+                  width: '100%',
+                  height: '100%',
+                  border: 'none',
+                  outline: 'none',
+                  background: 'transparent',
+                  fontSize: `${12 * zoom}px`,
+                  textAlign: 'center',
+                  color: '#1e293b'
+                }}
+                autoFocus
+              />
+            </div>
+          </foreignObject>
+        ) : (
+          <text
+            x={transformedWidth / 2}
+            y={transformedHeight / 2}
+            textAnchor="middle"
+            dominantBaseline="middle"
+            className="node-text"
+            style={{ fontSize: `${12 * zoom}px` }}
+          >
+            {node.title}
+          </text>
+        )}
+        
         {node.id !== 'virtual-root' && (
           <text
             x={transformedWidth - 10}
@@ -272,28 +410,50 @@ const MindMap: React.FC<MindMapProps> = ({
             L{node.level}
           </text>
         )}
+        
         {node.id !== 'virtual-root' && (
           <g className="node-actions-overlay">
+            <button
+              className="action-btn edit-content-btn"
+              onClick={(e) => { 
+                e.stopPropagation(); 
+                if (note) openContentEditor(note); 
+              }}
+              title="Edit content (or right-click for menu)"
+              style={{
+                transform: `translate(${transformedWidth - 30}, 5) scale(${zoom})`,
+                transformOrigin: 'center'
+              }}
+            >
+              <Edit2 size={12} />
+            </button>
             <button
               className="action-btn add-child-btn"
               onClick={(e) => { e.stopPropagation(); onAddChildNote(notes.find(n => n.id === node.id)!); }}
               title="Add child note"
+              style={{
+                transform: `translate(${transformedWidth - 15}, 5) scale(${zoom})`,
+                transformOrigin: 'center'
+              }}
             >
-              <Plus size={14 * zoom} />
+              <Plus size={12} />
             </button>
             <button
               className="action-btn view-btn"
               onClick={(e) => { e.stopPropagation(); onNavigateToNote(notes.find(n => n.id === node.id)!); }}
               title="View note page"
+              style={{
+                transform: `translate(${transformedWidth - 45}, 5) scale(${zoom})`,
+                transformOrigin: 'center'
+              }}
             >
-              <Eye size={14 * zoom} />
+              <Eye size={12} />
             </button>
-            {/* Edit and Delete buttons can be added here if needed */}
           </g>
         )}
       </g>
     );
-  }, [handleNodeClick, handleNodeHover, selectedNote, hoveredNode, searchQuery, notes, onAddChildNote, onNavigateToNote, zoom, pan]);
+  }, [handleNodeClick, handleNodeHover, selectedNote, hoveredNode, searchQuery, notes, onAddChildNote, onNavigateToNote, zoom, pan, editingState, editValues, startEditing, handleTitleKeyDown, saveEdit, handleNodeRightClick, openContentEditor]);
 
   // Render connections
   const renderConnections = useCallback(() => {
@@ -344,6 +504,9 @@ const MindMap: React.FC<MindMapProps> = ({
           />
         </div>
         <div className="controls">
+          <div className="edit-hint">
+            <span className="hint-text">💡 Double-click nodes to edit titles • Right-click for menu • Ctrl+E to edit content</span>
+          </div>
           <button className="control-btn" onClick={onCreateNote}>
             <Plus size={16} />
             New Note
@@ -383,6 +546,93 @@ const MindMap: React.FC<MindMapProps> = ({
             {renderConnections()}
             {filteredNodes.map(renderNode)}
           </svg>
+        </div>
+      )}
+      
+      {/* Context Menu */}
+      {contextMenu && (
+        <div 
+          className="context-menu"
+          style={{
+            position: 'fixed',
+            left: Math.max(10, contextMenu.x - 75), // Center on x position, with margin from edge
+            top: Math.max(10, contextMenu.y - 30), // Position above cursor, with margin from edge
+            zIndex: 1001
+          }}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div className="context-menu-item" onClick={() => openContentEditor(contextMenu.note)}>
+            <Edit2 size={14} />
+            Edit Content
+          </div>
+          <div className="context-menu-item" onClick={() => startEditing(contextMenu.note, 'title')}>
+            <Edit2 size={14} />
+            Edit Title
+          </div>
+          <div className="context-menu-item" onClick={() => onAddChildNote(contextMenu.note)}>
+            <Plus size={14} />
+            Add Child
+          </div>
+          <div className="context-menu-item" onClick={() => onNavigateToNote(contextMenu.note)}>
+            <Eye size={14} />
+            View Note
+          </div>
+        </div>
+      )}
+      
+      {/* Content Editing Modal */}
+      {showContentModal && editingNote && (
+        <div className="modal-overlay" onClick={() => setShowContentModal(false)}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3>Edit Note Content</h3>
+              <button 
+                className="close-btn"
+                onClick={() => setShowContentModal(false)}
+              >
+                <X size={20} />
+              </button>
+            </div>
+            <div className="modal-body">
+              <div className="form-group">
+                <label htmlFor="note-title">Title:</label>
+                <input
+                  id="note-title"
+                  type="text"
+                  value={editValues.title}
+                  onChange={(e) => setEditValues({ ...editValues, title: e.target.value })}
+                  className="form-input"
+                />
+              </div>
+              <div className="form-group">
+                <label htmlFor="note-content">Content:</label>
+                <textarea
+                  id="note-content"
+                  value={editValues.content}
+                  onChange={(e) => setEditValues({ ...editValues, content: e.target.value })}
+                  className="form-textarea"
+                  rows={8}
+                />
+              </div>
+            </div>
+            <div className="modal-footer">
+              <button 
+                className="btn btn-secondary"
+                onClick={() => setShowContentModal(false)}
+              >
+                Cancel
+              </button>
+              <button 
+                className="btn btn-primary"
+                onClick={() => {
+                  saveEdit(editingNote);
+                  setShowContentModal(false);
+                }}
+              >
+                Save Changes
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>
