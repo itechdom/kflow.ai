@@ -54,9 +54,6 @@ const NoteList: React.FC<NoteListProps> = ({
 	const noteRefs = useRef<Record<string, HTMLDivElement | null>>({});
 	const titleInputRefs = useRef<Record<string, HTMLInputElement | null>>({});
 	const contentTextareaRefs = useRef<Record<string, HTMLTextAreaElement | null>>({});
-
-	// Debounced autosave timer
-	const autoSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 	const tagsContainerRef = useRef<HTMLDivElement | null>(null);
 	const queueAutoSave = useCallback((note: Note, partial: Partial<Pick<Note, 'title' | 'content' | 'tags'>>) => {
 		const updatedNote: Note = {
@@ -66,13 +63,7 @@ const NoteList: React.FC<NoteListProps> = ({
 			tags: partial.tags !== undefined ? partial.tags : editValues.tags,
 			updatedAt: new Date()
 		};
-
-		// if (autoSaveTimerRef.current) {
-			// clearTimeout(autoSaveTimerRef.current);
-		// }
-		// autoSaveTimerRef.current = setTimeout(() => {
-			onEditNote(updatedNote);
-		// }, 600);
+		onEditNote(updatedNote);
 	}, [editValues.title, editValues.content, editValues.tags, onEditNote]);
 
 	// Auto-expand parent note when child is selected
