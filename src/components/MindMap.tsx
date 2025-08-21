@@ -163,7 +163,6 @@ const MindMap: React.FC<MindMapProps> = ({
       }
       if(e.key === 'Backspace') {
         //check if editing is on, if so don't delete note
-        console.log('editing', editingState);
         if(editingState) {
           return;
         }
