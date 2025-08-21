@@ -1,6 +1,6 @@
 import React, { useCallback, useMemo, useRef, useState, useEffect } from 'react';
 import { Note } from '../types/Note';
-import { Plus, Eye, Edit2, X } from 'lucide-react';
+import { Plus, Eye, Edit2, X, Paperclip } from 'lucide-react';
 
 interface MindMapProps {
   notes: Note[];
@@ -399,6 +399,68 @@ const MindMap: React.FC<MindMapProps> = ({
           </text>
         )}
         
+        {/* Content Edit Button - Always visible inside the node */}
+        {node.id !== 'virtual-root' && !isEditingTitle && (
+          <foreignObject x="5" y="5" width="20" height="20">
+            <div style={{ width: '100%', height: '100%' }}>
+              <button
+                className="content-edit-btn"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (note) openContentEditor(note);
+                }}
+                title="Edit content"
+                style={{
+                  width: '100%',
+                  height: '100%',
+                  border: 'none',
+                  background: 'rgba(37, 99, 235, 0.1)',
+                  borderRadius: '4px',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  transition: 'all 0.2s'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = 'rgba(37, 99, 235, 0.2)';
+                  e.currentTarget.style.transform = 'scale(1.1)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = 'rgba(37, 99, 235, 0.1)';
+                  e.currentTarget.style.transform = 'scale(1)';
+                }}
+              >
+                <Edit2 size={10} color="#2563eb" />
+              </button>
+            </div>
+          </foreignObject>
+        )}
+        
+        {/* Content Indicator - Show clip icon if node has actual content */}
+        {node.id !== 'virtual-root' && note && note.content && note.content.trim() !== '' && note.content !== 'Add your content here...' && (
+          <foreignObject x={transformedWidth - 25} y={transformedHeight - 25} width="20" height="20">
+            <div style={{ width: '100%', height: '100%' }}>
+              <div
+                className="content-indicator"
+                title={`Has content: ${note.content.length > 50 ? note.content.substring(0, 50) + '...' : note.content}`}
+                style={{
+                  width: '100%',
+                  height: '100%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  background: 'rgba(34, 197, 94, 0.1)',
+                  borderRadius: '4px',
+                  border: '1px solid rgba(34, 197, 94, 0.3)'
+                }}
+              >
+                <Paperclip size={10} color="#22c55e" />
+              </div>
+            </div>
+          </foreignObject>
+        )}
+        
         {node.id !== 'virtual-root' && (
           <text
             x={transformedWidth - 10}
@@ -413,20 +475,6 @@ const MindMap: React.FC<MindMapProps> = ({
         
         {node.id !== 'virtual-root' && (
           <g className="node-actions-overlay">
-            <button
-              className="action-btn edit-content-btn"
-              onClick={(e) => { 
-                e.stopPropagation(); 
-                if (note) openContentEditor(note); 
-              }}
-              title="Edit content (or right-click for menu)"
-              style={{
-                transform: `translate(${transformedWidth - 30}, 5) scale(${zoom})`,
-                transformOrigin: 'center'
-              }}
-            >
-              <Edit2 size={12} />
-            </button>
             <button
               className="action-btn add-child-btn"
               onClick={(e) => { e.stopPropagation(); onAddChildNote(notes.find(n => n.id === node.id)!); }}
@@ -505,12 +553,8 @@ const MindMap: React.FC<MindMapProps> = ({
         </div>
         <div className="controls">
           <div className="edit-hint">
-            <span className="hint-text">💡 Double-click nodes to edit titles • Right-click for menu • Ctrl+E to edit content</span>
+            <span className="hint-text">💡 Double-click nodes to edit titles • Click blue edit button inside nodes for content • Green clip icon = has content • Right-click for menu • Ctrl+E to edit content</span>
           </div>
-          <button className="control-btn" onClick={onCreateNote}>
-            <Plus size={16} />
-            New Note
-          </button>
           <div className="zoom-controls">
             <button 
               className="zoom-btn" 
@@ -565,17 +609,9 @@ const MindMap: React.FC<MindMapProps> = ({
             <Edit2 size={14} />
             Edit Content
           </div>
-          <div className="context-menu-item" onClick={() => startEditing(contextMenu.note, 'title')}>
-            <Edit2 size={14} />
-            Edit Title
-          </div>
           <div className="context-menu-item" onClick={() => onAddChildNote(contextMenu.note)}>
             <Plus size={14} />
             Add Child
-          </div>
-          <div className="context-menu-item" onClick={() => onNavigateToNote(contextMenu.note)}>
-            <Eye size={14} />
-            View Note
           </div>
         </div>
       )}

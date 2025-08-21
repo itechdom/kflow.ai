@@ -1594,6 +1594,35 @@ body {
   color: #7c3aed;
 }
 
+/* Content Edit Button inside mindmap nodes */
+.content-edit-btn {
+  opacity: 0.7;
+  transition: all 0.2s ease;
+}
+
+.content-edit-btn:hover {
+  opacity: 1;
+}
+
+.mindmap-node:hover .content-edit-btn {
+  opacity: 1;
+}
+
+/* Content Indicator (clip icon) for nodes with content */
+.content-indicator {
+  opacity: 0.8;
+  transition: all 0.2s ease;
+}
+
+.content-indicator:hover {
+  opacity: 1;
+  transform: scale(1.1);
+}
+
+.mindmap-node:hover .content-indicator {
+  opacity: 1;
+}
+
 /* Action buttons overlay */
 .node-actions-overlay {
   opacity: 0;
