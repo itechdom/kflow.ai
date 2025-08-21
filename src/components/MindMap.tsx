@@ -174,7 +174,7 @@ const MindMap: React.FC<MindMapProps> = ({
 
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [selectedNote, openContentEditor]);
+  }, [selectedNote, editingState, openContentEditor]);
 
   	// Auto-edit newly created child notes
 	useEffect(() => {
