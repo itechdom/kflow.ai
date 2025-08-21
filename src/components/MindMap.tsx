@@ -264,11 +264,6 @@ const MindMap: React.FC<MindMapProps> = ({
       }
     });
 
-    // Sort children for consistent layout
-    nodesMap.forEach(node => {
-      node.children.sort((a, b) => a.title.localeCompare(b.title));
-    });
-
     // Create a virtual root if there are multiple actual root nodes
     if (rootNodes.length > 1) {
       return {
@@ -510,33 +505,6 @@ const MindMap: React.FC<MindMapProps> = ({
           >
             L{node.level}
           </text>
-        )}
-        
-        {node.id !== 'virtual-root' && (
-          <g className="node-actions-overlay">
-            <button
-              className="action-btn add-child-btn"
-              onClick={(e) => { e.stopPropagation(); onAddChildNote(notes.find(n => n.id === node.id)!); }}
-              title="Add child note"
-              style={{
-                transform: `translate(${transformedWidth - 15}, 5) scale(${zoom})`,
-                transformOrigin: 'center'
-              }}
-            >
-              <Plus size={12} />
-            </button>
-            <button
-              className="action-btn view-btn"
-              onClick={(e) => { e.stopPropagation(); onNavigateToNote(notes.find(n => n.id === node.id)!); }}
-              title="View note page"
-              style={{
-                transform: `translate(${transformedWidth - 45}, 5) scale(${zoom})`,
-                transformOrigin: 'center'
-              }}
-            >
-              <Eye size={12} />
-            </button>
-          </g>
         )}
       </g>
     );
