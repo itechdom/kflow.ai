@@ -88,21 +88,57 @@ const MindMap: React.FC<MindMapProps> = ({
     return () => document.removeEventListener('click', handleClickOutside);
   }, []);
 
-  // Handle mouse wheel zoom
+  // Handle mouse wheel for zooming and scrolling
   const handleWheel = useCallback((e: React.WheelEvent) => {
     e.preventDefault();
-    const delta = e.deltaY > 0 ? 0.9 : 1.1;
-    const newZoom = Math.max(0.3, Math.min(3, zoom * delta));
-    setZoom(newZoom);
-  }, [zoom]);
+    e.stopPropagation();
+    
+    if (editingState) return;
+    
+    const deltaX = e.deltaX;
+    const deltaY = e.deltaY;
+    const deltaZ = e.deltaZ;
+    
+    // Handle horizontal scrolling (left/right mouse wheel movement)
+    if (Math.abs(deltaX) > Math.abs(deltaY)) {
+      // Horizontal scroll - move view left/right
+      const scrollSpeed = 0.5;
+      setPan(prevPan => ({
+        x: prevPan.x - deltaX * scrollSpeed,
+        y: prevPan.y
+      }));
+      return;
+    }
+    
+    // Handle vertical scrolling (up/down mouse wheel movement)
+    if (Math.abs(deltaY) > 0) {
+      // Vertical scroll - move view up/down
+      const scrollSpeed = 0.5;
+      setPan(prevPan => ({
+        x: prevPan.x,
+        y: prevPan.y - deltaY * scrollSpeed
+      }));
+      return;
+    }
+    
+    // Handle zooming (if no significant horizontal/vertical movement)
+    if (Math.abs(deltaZ) > 0 || (Math.abs(deltaX) < 5 && Math.abs(deltaY) < 5)) {
+      const zoomSpeed = 0.001;
+      const newZoom = Math.max(0.1, Math.min(3, zoom - deltaY * zoomSpeed));
+      setZoom(newZoom);
+    }
+  }, [editingState, zoom]);
 
   // Handle mouse down for panning
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
+    if(editingState){
+      return;
+    }
     if (e.button === 0) { // Left mouse button
       setIsDragging(true);
       setDragStart({ x: e.clientX - pan.x, y: e.clientY - pan.y });
     }
-  }, [pan]);
+  }, [pan, editingState]);
 
   // Handle mouse move for panning
   const handleMouseMove = useCallback((e: React.MouseEvent) => {
@@ -291,29 +327,34 @@ const MindMap: React.FC<MindMapProps> = ({
     return Math.max(minWidth, Math.min(maxWidth, textWidth));
   }, []);
 
-  // Calculate optimal node height based on text content and width
-  const calculateNodeHeight = useCallback((title: string, width: number): number => {
-    const minHeight = 60; // Minimum height for any node
-    const lineHeight = 16; // Height per line of text
-    const padding = 30; // Vertical padding
-    
-    // Calculate how many lines the text will need
-    const charsPerLine = Math.floor((width - 40) / 8); // 8px per character, 40px padding
-    const lines = Math.ceil(title.length / charsPerLine);
-    
-    // Ensure at least 1 line and calculate total height
-    const totalLines = Math.max(1, lines);
-    const textHeight = totalLines * lineHeight + padding;
-    
-    return Math.max(minHeight, textHeight);
-  }, []);
-
   // Wrap text into multiple lines based on available width
   const wrapText = useCallback((text: string, maxWidth: number): string[] => {
-    const words = text.split(' ');
+    if (!text || text.trim() === '') return [''];
+    
+    const words = text.trim().split(' ');
     const lines: string[] = [];
     let currentLine = '';
     
+    // Handle single word or very short text
+    if (words.length === 1) {
+      const wordWidth = words[0].length * 8;
+      if (wordWidth <= maxWidth - 40) {
+        return [words[0]];
+      } else {
+        // Break long single word
+        const charsPerLine = Math.floor((maxWidth - 40) / 8);
+        const brokenLines = [];
+        let remainingText = words[0];
+        while (remainingText.length > 0) {
+          const line = remainingText.substring(0, charsPerLine);
+          brokenLines.push(line);
+          remainingText = remainingText.substring(charsPerLine);
+        }
+        return brokenLines;
+      }
+    }
+    
+    // Handle multiple words
     words.forEach(word => {
       const testLine = currentLine ? `${currentLine} ${word}` : word;
       const testWidth = testLine.length * 8; // 8px per character
@@ -324,7 +365,20 @@ const MindMap: React.FC<MindMapProps> = ({
         if (currentLine) {
           lines.push(currentLine);
         }
-        currentLine = word;
+        // Check if single word is too long
+        if (word.length * 8 > maxWidth - 40) {
+          // Break long word
+          const charsPerLine = Math.floor((maxWidth - 40) / 8);
+          let remainingWord = word;
+          while (remainingWord.length > 0) {
+            const line = remainingWord.substring(0, charsPerLine);
+            lines.push(line);
+            remainingWord = remainingWord.substring(charsPerLine);
+          }
+          currentLine = '';
+        } else {
+          currentLine = word;
+        }
       }
     });
     
@@ -334,6 +388,23 @@ const MindMap: React.FC<MindMapProps> = ({
     
     return lines.length > 0 ? lines : [text];
   }, []);
+
+  // Calculate optimal node height based on text content and width
+  const calculateNodeHeight = useCallback((title: string, width: number): number => {
+    const minHeight = 60; // Minimum height for any node
+    const lineHeight = 18; // Height per line of text (increased for better readability)
+    const padding = 40; // Vertical padding (top + bottom)
+    const lineSpacing = 4; // Spacing between lines
+    
+    // Use wrapText to get actual number of lines
+    const wrappedLines = wrapText(title, width);
+    const totalLines = wrappedLines.length;
+    
+    // Calculate height based on actual wrapped lines
+    const textHeight = totalLines * lineHeight + (totalLines - 1) * lineSpacing + padding;
+    
+    return Math.max(minHeight, textHeight);
+  }, [wrapText]);
 
   // Prepare tree data from notes
   const treeData = useMemo(() => {
@@ -384,7 +455,7 @@ const MindMap: React.FC<MindMapProps> = ({
       return rootNodes[0];
     }
     return null;
-  }, [notes, calculateNodeWidth, calculateNodeHeight]);
+  }, [notes, calculateNodeWidth, calculateNodeHeight, wrapText]);
 
   // Enhanced layout the tree with collision detection and prevention
   const layoutTree = useCallback((node: TreeNode, x: number, y: number, level: number, siblingIndex: number, totalSiblings: number): { nodes: TreeNode[], connections: { source: TreeNode, target: TreeNode }[], totalWidth: number } => {
@@ -692,7 +763,7 @@ const MindMap: React.FC<MindMapProps> = ({
   useEffect(() => {
     const handleArrowNavigation = (e: KeyboardEvent) => {
       // Only handle arrow keys when tree container is focused
-      if (!isTreeContainerFocused) return;
+      if (!isTreeContainerFocused || editingState) return;
       
       // Arrow key navigation
       if (e.key === 'ArrowUp' || e.key === 'ArrowDown' || e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
@@ -748,7 +819,7 @@ const MindMap: React.FC<MindMapProps> = ({
 
     document.addEventListener('keydown', handleArrowNavigation);
     return () => document.removeEventListener('keydown', handleArrowNavigation);
-  }, [isTreeContainerFocused, selectedNote, findParentNote, findFirstChildNote, findPreviousSiblingNote, findNextSiblingNote, onSelectNote, laidOutNodes, containerWidth, containerHeight]);
+  }, [isTreeContainerFocused, selectedNote, findParentNote, findFirstChildNote, findPreviousSiblingNote, findNextSiblingNote, onSelectNote, laidOutNodes, containerWidth, containerHeight, editingState]);
 
   const handleNodeClick = useCallback((node: TreeNode) => {
     if (node.id === 'virtual-root') return;
@@ -857,7 +928,7 @@ const MindMap: React.FC<MindMapProps> = ({
               }}
             >
               {wrapText(node.title, transformedWidth).map((line, index) => (
-                <div key={index} style={{ margin: '1px 0' }}>
+                <div key={index} style={{ margin: '2px 0' }}>
                   {line}
                 </div>
               ))}
