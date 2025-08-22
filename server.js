@@ -104,7 +104,7 @@ app.post('/api/generate-children', async (req, res) => {
         },
         {
           role: "user",
-          content: `Generate child notes for a parent note titled "${parentTitle}". ${parentContent ? `Parent content: ${parentContent}` : ''} ${parentTags && parentTags.length > 0 ? `Parent tags: ${parentTags.join(', ')}` : ''}. Create 3-5 child notes that are logical subtopics.`
+          content: `Generate child notes for a parent note titled "${parentTitle}". ${parentContent ? `Parent content: ${parentContent}` : ''} ${parentTags && parentTags.length > 0 ? `Parent tags: ${parentTags.join(', ')}` : ''}. Create as many child notes that are logical subtopics.`
         }
       ],
       temperature: 0.5,
