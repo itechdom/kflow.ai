@@ -1,8 +1,10 @@
 import React, { useCallback, useMemo, useRef, useState, useEffect } from 'react';
 import { Note } from '../types/Note';
-import { Plus, Eye, Edit2, X, Paperclip } from 'lucide-react';
+import { Plus, Eye, Edit2, X, Paperclip, Sparkles } from 'lucide-react';
 import Modal from './Modal';
 import NoteForm from './NoteForm';
+import { useAppDispatch } from '../store/hooks';
+import { createNote } from '../store/noteSlice';
 
 interface MindMapProps {
   notes: Note[];
@@ -67,6 +69,7 @@ const MindMap: React.FC<MindMapProps> = ({
   const [editingNote, setEditingNote] = useState<Note | null>(null);
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number; note: Note } | null>(null);
   const [isTreeContainerFocused, setIsTreeContainerFocused] = useState(false);
+  const dispatch = useAppDispatch();
 
   // Update container dimensions
   useEffect(() => {
@@ -93,7 +96,7 @@ const MindMap: React.FC<MindMapProps> = ({
     e.preventDefault();
     e.stopPropagation();
     
-    if (editingState) return;
+    if (editingState || showContentModal) return;
     
     const deltaX = e.deltaX;
     const deltaY = e.deltaY;
@@ -127,7 +130,7 @@ const MindMap: React.FC<MindMapProps> = ({
       const newZoom = Math.max(0.1, Math.min(3, zoom - deltaY * zoomSpeed));
       setZoom(newZoom);
     }
-  }, [editingState, zoom]);
+  }, [editingState, zoom,, showContentModal]);
 
   // Handle mouse down for panning
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
@@ -838,6 +841,75 @@ const MindMap: React.FC<MindMapProps> = ({
     setHoveredNode(node);
   }, []);
 
+  // Handle AI generation of children for a note
+  const handleAIGenerateChildren = useCallback(async (parentNote: Note) => {
+    try {
+      // Show loading state
+      const loadingNote = {
+        ...parentNote,
+        isGeneratingChildren: true
+      };
+      onEditNote(loadingNote);
+
+      // Call OpenAI API to generate children
+      const response = await fetch('http://localhost:3001/api/generate-children', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ 
+          parentTitle: parentNote.title,
+          parentContent: parentNote.content || '',
+          parentTags: parentNote.tags || []
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to generate children');
+      }
+
+      const data = await response.json();
+      
+      // Create child notes from AI response using Redux
+      data.children.forEach((childData: any, index: number) => {
+        const childNote = {
+          title: childData.title,
+          content: childData.content || '',
+          tags: childData.tags || [],
+          parentId: parentNote.id,
+          level: parentNote.level + 1,
+          children: []
+        };
+        
+        // Dispatch to create the child note
+        dispatch(createNote(childNote));
+      });
+
+      // Update parent note to expand and show new children
+      const updatedParentNote = {
+        ...parentNote,
+        isExpanded: true, // Auto-expand to show new children
+        isGeneratingChildren: false
+      };
+
+      // Update the parent note
+      onEditNote(updatedParentNote);
+
+    } catch (error) {
+      console.error('Error generating children:', error);
+      
+      // Reset loading state
+      const resetNote = {
+        ...parentNote,
+        isGeneratingChildren: false
+      };
+      onEditNote(resetNote);
+      
+      // Show error message (you could add a toast notification here)
+      alert('Failed to generate children. Please try again.');
+    }
+  }, [onEditNote, dispatch]);
+
   // Render tree node
   const renderNode = useCallback((node: TreeNode) => {
     const isSelected = selectedNote?.id === node.id;
@@ -987,6 +1059,44 @@ const MindMap: React.FC<MindMapProps> = ({
           </foreignObject>
         )}
 
+        {/* AI Generate Children Button */}
+        {node.id !== 'virtual-root' && !isEditingTitle && (
+          <foreignObject x="5" y="30" width="20" height="20">
+            <div style={{ width: '100%', height: '100%' }}>
+              <button
+                className="ai-generate-btn"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (note) handleAIGenerateChildren(note);
+                }}
+                title="Generate children with AI"
+                style={{
+                  width: '100%',
+                  height: '100%',
+                  border: 'none',
+                  background: 'rgba(168, 85, 247, 0.1)',
+                  borderRadius: '4px',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  transition: 'all 0.2s'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = 'rgba(168, 85, 247, 0.2)';
+                  e.currentTarget.style.transform = 'scale(1.1)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = 'rgba(168, 85, 247, 0.1)';
+                  e.currentTarget.style.transform = 'scale(1)';
+                }}
+              >
+                <Sparkles size={10} color="#a855f7" />
+              </button>
+            </div>
+          </foreignObject>
+        )}
+        
         {/* Expand/Collapse Indicator - Show if note has children */}
         {node.id !== 'virtual-root' && !isEditingTitle && note && note.children && note.children.length > 0 && (
           <foreignObject x={transformedWidth - 30} y="20" width="20" height="20">
@@ -1070,7 +1180,7 @@ const MindMap: React.FC<MindMapProps> = ({
         )}
       </g>
     );
-  }, [handleNodeClick, handleNodeHover, selectedNote, hoveredNode, notes, onAddChildNote, onNavigateToNote, zoom, pan, editingState, editValues, startEditing, handleTitleKeyDown, saveEdit, handleNodeRightClick, openContentEditor, onEditNote, wrapText]);
+  }, [handleNodeClick, handleNodeHover, selectedNote, hoveredNode, notes, onAddChildNote, onNavigateToNote, zoom, pan, editingState, editValues, startEditing, handleTitleKeyDown, saveEdit, handleNodeRightClick, openContentEditor, onEditNote, wrapText, handleAIGenerateChildren]);
 
   // Render connections
   const renderConnections = useCallback(() => {

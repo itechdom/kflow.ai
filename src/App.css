@@ -758,7 +758,9 @@ body {
   background: #c7d2fe;
 }
 
-.ai-generator-section {
+/* AI Generator section styling - for specific contexts (not in modals) */
+.homepage .ai-generator-section,
+.note-page .ai-generator-section {
   margin-top: 24px;
   padding-top: 24px;
   border-top: 1px solid #e5e7eb;
@@ -1336,13 +1338,19 @@ body {
   border: 1px dashed #007bff;
 }
 
-/* AI Generator section styling */
-.ai-generator-section {
+/* AI Generator section styling - for standalone sections (not in modals) */
+.note-list .ai-generator-section,
+.mindmap-container .ai-generator-section {
   margin-top: 20px;
   padding: 20px;
   background-color: #f8f9fa;
   border-radius: 8px;
   border: 1px solid #e9ecef;
+}
+
+.ai-generator-section svg{
+  height: auto!important;
+  width: auto!important;
 }
 
 /* MindMap scrolling and zooming styles */
@@ -1779,16 +1787,20 @@ body {
   overflow-y: auto;
 }
 
-/* AI Generator section within modal */
+/* AI Generator section within modal - HIGH PRIORITY */
 .modal-body .ai-generator-section {
   border-bottom: 1px solid #e5e7eb;
   padding-bottom: 20px;
   margin-bottom: 20px;
-  margin-top: -1.5rem; /* Compensate for modal-body padding */
-  margin-left: -1.5rem;
-  margin-right: -1.5rem;
-  padding-left: 1.5rem;
-  padding-right: 1.5rem;
+  margin-top: -1.5rem !important; /* Compensate for modal-body padding */
+  margin-left: -1.5rem !important;
+  margin-right: -1.5rem !important;
+  padding-left: 1.5rem !important;
+  padding-right: 1.5rem !important;
+  padding-top: 1.5rem !important;
+  background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%) !important;
+  border-radius: 0 !important;
+  border: none !important;
 }
 
 /* Ensure form content fits within modal */
@@ -2604,11 +2616,7 @@ body {
   gap: 16px;
 }
 
-.ai-generator-section {
-  border-bottom: 1px solid #e5e7eb;
-  padding-bottom: 20px;
-  margin-bottom: 20px;
-}
+/* Removed conflicting general rule - modal-specific rules take precedence */
 
 .form-group {
   display: flex;
@@ -2769,10 +2777,10 @@ body {
   }
   
   .modal-body .ai-generator-section {
-    margin-left: -1rem;
-    margin-right: -1rem;
-    padding-left: 1rem;
-    padding-right: 1rem;
+    margin-left: -1rem !important;
+    margin-right: -1rem !important;
+    padding-left: 1rem !important;
+    padding-right: 1rem !important;
   }
 }
 
@@ -2787,10 +2795,10 @@ body {
   }
   
   .modal-body .ai-generator-section {
-    margin-left: -1rem;
-    margin-right: -1rem;
-    padding-left: 1rem;
-    padding-right: 1rem;
+    margin-left: -1rem !important;
+    margin-right: -1rem !important;
+    padding-left: 1rem !important;
+    padding-right: 1rem !important;
   }
   
   .ai-generator {
@@ -2800,4 +2808,34 @@ body {
   .ai-prompt-input {
     font-size: 16px; /* Prevent zoom on mobile */
   }
+}
+
+/* AI Generate Button in MindMap */
+.ai-generate-btn {
+  transition: all 0.2s ease;
+}
+
+.ai-generate-btn:hover {
+  transform: scale(1.1);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Loading state for AI generation */
+.mindmap-node.generating-children {
+  opacity: 0.7;
+  pointer-events: none;
+}
+
+.mindmap-node.generating-children::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 20px;
+  height: 20px;
+  margin: -10px 0 0 -10px;
+  border: 2px solid #a855f7;
+  border-top: 2px solid transparent;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
 }
