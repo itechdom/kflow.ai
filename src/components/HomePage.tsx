@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router';
 import { useAppSelector, useAppDispatch } from '../store/hooks';
 import { selectNote, deleteNote, addChildNote, createNote, setSearchQuery, editNote, toggleNoteExpanded, expandNote } from '../store/noteSlice';
 import NoteList from './NoteList';
-import MindMap from './MindMap';
 import SearchBar from './SearchBar';
 import Modal from './Modal';
 import NoteForm from './NoteForm';
