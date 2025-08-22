@@ -3,8 +3,8 @@ import { Note } from '../types/Note';
 import { Plus, Eye, Edit2, X, Paperclip, Sparkles } from 'lucide-react';
 import Modal from './Modal';
 import NoteForm from './NoteForm';
-import { useAppDispatch } from '../store/hooks';
-import { createNote } from '../store/noteSlice';
+import { useAppDispatch, useAppSelector } from '../store/hooks';
+import { createNote, aiGenerateChildren } from '../store/noteSlice';
 
 interface MindMapProps {
   notes: Note[];
@@ -870,30 +870,23 @@ const MindMap: React.FC<MindMapProps> = ({
 
       const data = await response.json();
       
-      // Create child notes from AI response using Redux
-      data.children.forEach((childData: any, index: number) => {
-        const childNote = {
-          title: childData.title,
-          content: childData.content || '',
-          tags: childData.tags || [],
-          parentId: parentNote.id,
-          level: parentNote.level + 1,
-          children: []
+      // Dispatch the aiGenerateChildren action with the generated children
+      dispatch(aiGenerateChildren({
+        parentId: parentNote.id,
+        children: data.children
+      }));
+
+      // The action will update the store, so we don't need to manually update the parent note
+      // The parent note will be updated by the reducer after the AI generation completes.
+      // We can add a small delay to ensure the UI reflects the new state.
+      setTimeout(() => {
+        // Reset the loading state
+        const resetNote = {
+          ...parentNote,
+          isGeneratingChildren: false
         };
-        
-        // Dispatch to create the child note
-        dispatch(createNote(childNote));
-      });
-
-      // Update parent note to expand and show new children
-      const updatedParentNote = {
-        ...parentNote,
-        isExpanded: true, // Auto-expand to show new children
-        isGeneratingChildren: false
-      };
-
-      // Update the parent note
-      onEditNote(updatedParentNote);
+        onEditNote(resetNote);
+      }, 200);
 
     } catch (error) {
       console.error('Error generating children:', error);
@@ -916,7 +909,6 @@ const MindMap: React.FC<MindMapProps> = ({
     const isHovered = hoveredNode?.id === node.id;
     const isEditingTitle = editingState?.noteId === node.id && editingState?.field === 'title';
     const note = notes.find(n => n.id === node.id);
-
 
     // Apply zoom and pan transformations
     const transformedX = (node.x - node.width / 2) * zoom + pan.x;

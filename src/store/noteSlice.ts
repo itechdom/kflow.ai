@@ -180,7 +180,43 @@ const noteSlice = createSlice({
         
         state.notes.push(newChildNote);
         parentNote.children = parentNote.children || [];
+        parentNote.isExpanded = true;
         parentNote.children.push(newChildNote.id);
+      }
+    },
+
+    // AI Generate Children - Create multiple children and update parent atomically
+    aiGenerateChildren: (state, action: PayloadAction<{ parentId: string; children: Array<{ title: string; content: string; tags: string[] }> }>) => {
+      const { parentId, children } = action.payload;
+      const parentNote = state.notes.find(n => n.id === parentId);
+      
+      if (parentNote) {
+        // Create all child notes
+        children.forEach(childData => {
+          const newChildNote: Note = {
+            id: generateUUID(),
+            title: childData.title,
+            content: childData.content,
+            tags: childData.tags,
+            parentId: parentId,
+            children: [],
+            level: parentNote.level + 1,
+            isExpanded: false,
+            createdAt: new Date(),
+            updatedAt: new Date()
+          };
+          
+          state.notes.push(newChildNote);
+        });
+
+        // Update parent note's children array with all new child IDs
+        const newChildIds = state.notes
+          .filter(n => n.parentId === parentId)
+          .map(n => n.id);
+        
+        parentNote.children = newChildIds;
+        parentNote.isExpanded = true; // Auto-expand to show new children
+        parentNote.updatedAt = new Date();
       }
     },
 
@@ -212,6 +248,7 @@ export const {
   editNote,
   deleteNote,
   addChildNote,
+  aiGenerateChildren,
   toggleNoteExpanded,
   expandNote,
   collapseNote,
