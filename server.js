@@ -100,7 +100,7 @@ app.post('/api/generate-children', async (req, res) => {
       messages: [
         {
           role: "system",
-          content: "You are a helpful assistant that creates child notes for a parent note. Generate as many relevant child notes that would logically belong under the parent note. Each child should be a specific subtopic or aspect of the parent topic. Return the response as a JSON array of objects with 'title', 'content', and 'tags' properties."
+          content: "You are a teacher that teaches topics by creating child notes for a parent note. Generate as many relevant child notes that would logically belong under the parent note. Each child should be a specific subtopic or aspect of the parent topic. the idea is to teach someone by walking them through this topic step by step. Return the response as a JSON array of objects with 'title', 'content', and 'tags' properties."
         },
         {
           role: "user",

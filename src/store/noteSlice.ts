@@ -1,6 +1,15 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { Note } from '../types/Note';
 
+// Generate a simple UUID v4-like string
+function generateUUID(): string {
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+    const r = Math.random() * 16 | 0;
+    const v = c === 'x' ? r : (r & 0x3 | 0x8);
+    return v.toString(16);
+  });
+}
+
 interface NoteState {
   notes: Note[];
   selectedNote: Note | null;
@@ -62,7 +71,7 @@ const noteSlice = createSlice({
     createNote: (state, action: PayloadAction<Omit<Note, 'id' | 'createdAt' | 'updatedAt' | 'isExpanded'>>) => {
       const newNote: Note = {
         ...action.payload,
-        id: Date.now().toString(),
+        id: generateUUID(),
         createdAt: new Date(),
         updatedAt: new Date(),
         isExpanded: false
@@ -157,7 +166,7 @@ const noteSlice = createSlice({
       const parentNote = state.notes.find(n => n.id === action.payload.id);
       if (parentNote) {
         const newChildNote: Note = {
-          id: Date.now().toString(),
+          id: generateUUID(),
           title: 'New Child Note',
           content: 'Add your content here...',
           createdAt: new Date(),
