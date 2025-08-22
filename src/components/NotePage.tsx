@@ -7,7 +7,6 @@ import NoteList from './NoteList';
 import MindMap from './MindMap';
 import SearchBar from './SearchBar';
 import { ArrowLeft, List, Map } from 'lucide-react';
-import { current } from '@reduxjs/toolkit';
 
 const NotePage: React.FC = () => {
   const { noteId } = useParams<{ noteId: string }>();
