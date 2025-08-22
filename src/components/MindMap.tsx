@@ -277,6 +277,64 @@ const MindMap: React.FC<MindMapProps> = ({
     }
   }, [saveEdit, cancelEdit]);
 
+  // Calculate optimal node width based on text content
+  const calculateNodeWidth = useCallback((title: string): number => {
+    const minWidth = 120; // Minimum width for any node
+    const maxWidth = 300; // Maximum width before text overflow
+    const charWidth = 8; // Approximate width per character
+    const padding = 40; // Padding for buttons and spacing
+    
+    // Calculate width needed for text
+    const textWidth = title.length * charWidth + padding;
+    
+    // Ensure width is within bounds
+    return Math.max(minWidth, Math.min(maxWidth, textWidth));
+  }, []);
+
+  // Calculate optimal node height based on text content and width
+  const calculateNodeHeight = useCallback((title: string, width: number): number => {
+    const minHeight = 60; // Minimum height for any node
+    const lineHeight = 16; // Height per line of text
+    const padding = 30; // Vertical padding
+    
+    // Calculate how many lines the text will need
+    const charsPerLine = Math.floor((width - 40) / 8); // 8px per character, 40px padding
+    const lines = Math.ceil(title.length / charsPerLine);
+    
+    // Ensure at least 1 line and calculate total height
+    const totalLines = Math.max(1, lines);
+    const textHeight = totalLines * lineHeight + padding;
+    
+    return Math.max(minHeight, textHeight);
+  }, []);
+
+  // Wrap text into multiple lines based on available width
+  const wrapText = useCallback((text: string, maxWidth: number): string[] => {
+    const words = text.split(' ');
+    const lines: string[] = [];
+    let currentLine = '';
+    
+    words.forEach(word => {
+      const testLine = currentLine ? `${currentLine} ${word}` : word;
+      const testWidth = testLine.length * 8; // 8px per character
+      
+      if (testWidth <= maxWidth - 40) { // 40px padding
+        currentLine = testLine;
+      } else {
+        if (currentLine) {
+          lines.push(currentLine);
+        }
+        currentLine = word;
+      }
+    });
+    
+    if (currentLine) {
+      lines.push(currentLine);
+    }
+    
+    return lines.length > 0 ? lines : [text];
+  }, []);
+
   // Prepare tree data from notes
   const treeData = useMemo(() => {
     const nodesMap = new Map<string, TreeNode>();
@@ -284,10 +342,12 @@ const MindMap: React.FC<MindMapProps> = ({
 
     // Create all nodes
     notes.forEach(note => {
+      const calculatedWidth = calculateNodeWidth(note.title);
+      const calculatedHeight = calculateNodeHeight(note.title, calculatedWidth);
       nodesMap.set(note.id, {
         id: note.id,
         title: note.title,
-        x: 0, y: 0, width: 0, height: 0, // Will be calculated by layout
+        x: 0, y: 0, width: calculatedWidth, height: calculatedHeight, // Set calculated width and height
         level: note.level,
         children: [],
         parentId: note.parentId
@@ -324,15 +384,17 @@ const MindMap: React.FC<MindMapProps> = ({
       return rootNodes[0];
     }
     return null;
-  }, [notes]);
+  }, [notes, calculateNodeWidth, calculateNodeHeight]);
 
   // Enhanced layout the tree with collision detection and prevention
   const layoutTree = useCallback((node: TreeNode, x: number, y: number, level: number, siblingIndex: number, totalSiblings: number): { nodes: TreeNode[], connections: { source: TreeNode, target: TreeNode }[], totalWidth: number } => {
-    const nodeWidth = 150;
-    const nodeHeight = 60;
     const horizontalSpacing = 200;
     const verticalSpacing = 100;
     const groupSpacing = 100; // Additional spacing between different parent groups
+
+    // Calculate dynamic width and height based on text content
+    const nodeWidth = calculateNodeWidth(node.title);
+    const nodeHeight = calculateNodeHeight(node.title, nodeWidth);
 
     node.x = x;
     node.y = y;
@@ -387,7 +449,7 @@ const MindMap: React.FC<MindMapProps> = ({
     }
 
     return { nodes, connections, totalWidth };
-  }, []);
+  }, [calculateNodeWidth, calculateNodeHeight]);
 
   // Helper function to calculate bounds of a group of nodes
   const calculateGroupBounds = useCallback((nodes: TreeNode[]): { minX: number; maxX: number } => {
@@ -776,15 +838,44 @@ const MindMap: React.FC<MindMapProps> = ({
             </div>
           </foreignObject>
         ) : (
+          <foreignObject x="10" y="15" width={transformedWidth - 20} height={transformedHeight - 30}>
+            <div 
+              style={{ 
+                width: '100%', 
+                height: '100%',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: `${12 * zoom}px`,
+                color: '#1e293b',
+                lineHeight: '1.2',
+                textAlign: 'center',
+                wordWrap: 'break-word',
+                overflowWrap: 'break-word',
+                hyphens: 'auto'
+              }}
+            >
+              {wrapText(node.title, transformedWidth).map((line, index) => (
+                <div key={index} style={{ margin: '1px 0' }}>
+                  {line}
+                </div>
+              ))}
+            </div>
+          </foreignObject>
+        )}
+        
+        {/* Text overflow indicator - show ellipsis for long titles */}
+        {!isEditingTitle && node.title.length > 35 && (
           <text
-            x={transformedWidth / 2}
-            y={transformedHeight / 2}
-            textAnchor="middle"
-            dominantBaseline="middle"
-            className="node-text"
-            style={{ fontSize: `${12 * zoom}px` }}
+            x={transformedWidth - 10}
+            y={transformedHeight - 5}
+            textAnchor="end"
+            dominantBaseline="bottom"
+            className="text-overflow-indicator"
+            style={{ fontSize: `${10 * zoom}px`, fill: '#9ca3af' }}
           >
-            {node.title}
+            ...
           </text>
         )}
         
@@ -828,7 +919,7 @@ const MindMap: React.FC<MindMapProps> = ({
 
         {/* Expand/Collapse Indicator - Show if note has children */}
         {node.id !== 'virtual-root' && !isEditingTitle && note && note.children && note.children.length > 0 && (
-          <foreignObject x={transformedWidth - 25} y="20" width="20" height="20">
+          <foreignObject x={transformedWidth - 30} y="20" width="20" height="20">
             <div style={{ width: '100%', height: '100%' }}>
               <button
                 className={`expand-collapse-btn ${note.isExpanded ? 'expanded' : 'collapsed'}`}
@@ -873,7 +964,7 @@ const MindMap: React.FC<MindMapProps> = ({
         
         {/* Content Indicator - Show clip icon if node has actual content */}
         {node.id !== 'virtual-root' && note && note.content && note.content.trim() !== '' && note.content !== 'Add your content here...' && (
-          <foreignObject x={transformedWidth - 25} y={transformedHeight - 25} width="20" height="20">
+          <foreignObject x={transformedWidth - 55} y={transformedHeight - 25} width="20" height="20">
             <div style={{ width: '100%', height: '100%' }}>
               <div
                 className="content-indicator"
@@ -898,17 +989,18 @@ const MindMap: React.FC<MindMapProps> = ({
         {node.id !== 'virtual-root' && (
           <text
             x={transformedWidth - 10}
-            y={15 * zoom}
+            y={transformedHeight - 10}
             textAnchor="end"
+            dominantBaseline="bottom"
             className="node-level-badge"
-            style={{ fontSize: `${10 * zoom}px` }}
+            style={{ fontSize: `${10 * zoom}px`, fill: '#9ca3af' }}
           >
             L{node.level}
           </text>
         )}
       </g>
     );
-  }, [handleNodeClick, handleNodeHover, selectedNote, hoveredNode, notes, onAddChildNote, onNavigateToNote, zoom, pan, editingState, editValues, startEditing, handleTitleKeyDown, saveEdit, handleNodeRightClick, openContentEditor, onEditNote]);
+  }, [handleNodeClick, handleNodeHover, selectedNote, hoveredNode, notes, onAddChildNote, onNavigateToNote, zoom, pan, editingState, editValues, startEditing, handleTitleKeyDown, saveEdit, handleNodeRightClick, openContentEditor, onEditNote, wrapText]);
 
   // Render connections
   const renderConnections = useCallback(() => {
