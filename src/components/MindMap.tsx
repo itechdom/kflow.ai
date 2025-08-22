@@ -249,7 +249,12 @@ const MindMap: React.FC<MindMapProps> = ({
     if (e.key === 'Enter') {
       e.preventDefault();
       saveEdit(note);
-    } else if (e.key === 'Escape') {
+    } 
+    else if (e.key === 'Tab') {
+      e.preventDefault();
+      saveEdit(note);
+    }
+    else if (e.key === 'Escape') {
       e.preventDefault();
       cancelEdit();
     }
