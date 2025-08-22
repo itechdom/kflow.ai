@@ -844,13 +844,6 @@ const MindMap: React.FC<MindMapProps> = ({
   // Handle AI generation of children for a note
   const handleAIGenerateChildren = useCallback(async (parentNote: Note) => {
     try {
-      // Show loading state
-      const loadingNote = {
-        ...parentNote,
-        isGeneratingChildren: true
-      };
-      onEditNote(loadingNote);
-
       // Call OpenAI API to generate children
       const response = await fetch('http://localhost:3001/api/generate-children', {
         method: 'POST',
@@ -875,18 +868,6 @@ const MindMap: React.FC<MindMapProps> = ({
         parentId: parentNote.id,
         children: data.children
       }));
-
-      // The action will update the store, so we don't need to manually update the parent note
-      // The parent note will be updated by the reducer after the AI generation completes.
-      // We can add a small delay to ensure the UI reflects the new state.
-      setTimeout(() => {
-        // Reset the loading state
-        const resetNote = {
-          ...parentNote,
-          isGeneratingChildren: false
-        };
-        onEditNote(resetNote);
-      }, 200);
 
     } catch (error) {
       console.error('Error generating children:', error);
