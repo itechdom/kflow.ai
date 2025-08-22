@@ -1,6 +1,8 @@
 import React, { useCallback, useMemo, useRef, useState, useEffect } from 'react';
 import { Note } from '../types/Note';
 import { Plus, Eye, Edit2, X, Paperclip } from 'lucide-react';
+import Modal from './Modal';
+import NoteForm from './NoteForm';
 
 interface MindMapProps {
   notes: Note[];
@@ -655,60 +657,30 @@ const MindMap: React.FC<MindMapProps> = ({
       )}
       
       {/* Content Editing Modal */}
-      {showContentModal && editingNote && (
-        <div className="modal-overlay" onClick={() => setShowContentModal(false)}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
-              <h3>Edit Note Content</h3>
-              <button 
-                className="close-btn"
-                onClick={() => setShowContentModal(false)}
-              >
-                <X size={20} />
-              </button>
-            </div>
-            <div className="modal-body">
-              <div className="form-group">
-                <label htmlFor="note-title">Title:</label>
-                <input
-                  id="note-title"
-                  type="text"
-                  value={editValues.title}
-                  onChange={(e) => setEditValues({ ...editValues, title: e.target.value })}
-                  className="form-input"
-                />
-              </div>
-              <div className="form-group">
-                <label htmlFor="note-content">Content:</label>
-                <textarea
-                  id="note-content"
-                  value={editValues.content}
-                  onChange={(e) => setEditValues({ ...editValues, content: e.target.value })}
-                  className="form-textarea"
-                  rows={8}
-                />
-              </div>
-            </div>
-            <div className="modal-footer">
-              <button 
-                className="btn btn-secondary"
-                onClick={() => setShowContentModal(false)}
-              >
-                Cancel
-              </button>
-              <button 
-                className="btn btn-primary"
-                onClick={() => {
-                  saveEdit(editingNote);
-                  setShowContentModal(false);
-                }}
-              >
-                Save Changes
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <Modal
+        isOpen={showContentModal}
+        onClose={() => setShowContentModal(false)}
+        title="Edit Note Content"
+      >
+        {editingNote && (
+          <NoteForm
+            note={editingNote}
+            onSave={(noteData) => {
+              const updatedNote = {
+                ...editingNote,
+                title: noteData.title || editingNote.title,
+                content: noteData.content || editingNote.content,
+                tags: noteData.tags || editingNote.tags,
+                updatedAt: new Date()
+              };
+              onEditNote(updatedNote);
+              setShowContentModal(false);
+            }}
+            onCancel={() => setShowContentModal(false)}
+            isCreating={false}
+          />
+        )}
+      </Modal>
     </div>
   );
 };

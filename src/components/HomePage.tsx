@@ -1,11 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router';
 import { useAppSelector, useAppDispatch } from '../store/hooks';
 import { selectNote, deleteNote, addChildNote, createNote, setSearchQuery, editNote, toggleNoteExpanded, expandNote } from '../store/noteSlice';
 import NoteList from './NoteList';
 import MindMap from './MindMap';
 import SearchBar from './SearchBar';
-import NoteEditor from './NoteEditor';
+import Modal from './Modal';
+import NoteForm from './NoteForm';
 import { Note } from '../types/Note';
 
 const HomePage: React.FC = () => {
@@ -63,7 +64,17 @@ const HomePage: React.FC = () => {
     dispatch(expandNote(noteId));
   };
 
-  const handleSaveNote = (newNote: Note) => {
+  const handleSaveNote = (noteData: Partial<Note>) => {
+    // Create a complete note object from the partial data
+    const newNote: Omit<Note, "id" | "createdAt" | "updatedAt" | "isExpanded"> = {
+      title: noteData.title || '',
+      content: noteData.content || '',
+      tags: noteData.tags || [],
+      parentId: noteData.parentId,
+      children: noteData.children || [],
+      level: noteData.level || 0
+    };
+
     // Create the note in Redux
     dispatch(createNote(newNote));
     
@@ -121,17 +132,17 @@ const HomePage: React.FC = () => {
       </main>
 
       {/* Create Note Modal */}
-      {showCreateModal && (
-        <div className="modal-overlay" onClick={handleCancelCreate}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <NoteEditor
-              onSave={handleSaveNote}
-              onCancel={handleCancelCreate}
-              isCreating={true}
-            />
-          </div>
-        </div>
-      )}
+      <Modal 
+        isOpen={showCreateModal}
+        onClose={handleCancelCreate}
+        title="Create New Note"
+      >
+        <NoteForm
+          onSave={handleSaveNote}
+          onCancel={handleCancelCreate}
+          isCreating={true}
+        />
+      </Modal>
     </div>
   );
 };
