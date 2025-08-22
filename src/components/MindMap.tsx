@@ -197,7 +197,7 @@ const MindMap: React.FC<MindMapProps> = ({
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       // Only handle keyboard shortcuts when tree container is focused
-      if (!isTreeContainerFocused) return;
+      if (!isTreeContainerFocused || editingState) return;
       
       // Arrow key navigation will be implemented after laidOutNodes is defined
       
@@ -236,7 +236,7 @@ const MindMap: React.FC<MindMapProps> = ({
 
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [selectedNote, editingState, openContentEditor, isTreeContainerFocused, handleAddChildNote, onDeleteNote, onEditNote]);
+  }, [selectedNote, editingState, openContentEditor, isTreeContainerFocused, handleAddChildNote, onDeleteNote, onEditNote, editingState]);
 
   	// Auto-edit newly created child notes
 	useEffect(() => {
@@ -460,8 +460,7 @@ const MindMap: React.FC<MindMapProps> = ({
   // Enhanced layout the tree with collision detection and prevention
   const layoutTree = useCallback((node: TreeNode, x: number, y: number, level: number, siblingIndex: number, totalSiblings: number): { nodes: TreeNode[], connections: { source: TreeNode, target: TreeNode }[], totalWidth: number } => {
     const horizontalSpacing = 200;
-    const verticalSpacing = 100;
-    const groupSpacing = 100; // Additional spacing between different parent groups
+    const verticalSpacing = 50;
 
     // Calculate dynamic width and height based on text content
     const nodeWidth = calculateNodeWidth(node.title);
@@ -484,7 +483,7 @@ const MindMap: React.FC<MindMapProps> = ({
       
       for (let i = 0; i < node.children.length; i++) {
         const child = node.children[i];
-        const childLayout = layoutTree(child, 0, y + verticalSpacing, level + 1, i, node.children.length);
+        const childLayout = layoutTree(child, 0, y + verticalSpacing + nodeHeight, level + 1, i, node.children.length);
         childWidths.push(childLayout.totalWidth);
         totalChildrenWidth += childLayout.totalWidth;
       }
@@ -501,7 +500,7 @@ const MindMap: React.FC<MindMapProps> = ({
       
       for (let i = 0; i < node.children.length; i++) {
         const child = node.children[i];
-        const childLayout = layoutTree(child, currentChildX, y + verticalSpacing, level + 1, i, node.children.length);
+        const childLayout = layoutTree(child, currentChildX, y + verticalSpacing + nodeHeight, level + 1, i, node.children.length);
         
         // Update child position to match the calculated position
         childLayout.nodes.forEach(childNode => {
