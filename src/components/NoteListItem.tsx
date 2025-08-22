@@ -127,6 +127,7 @@ const NoteListItem: React.FC<NoteListItemProps> = ({
 								}}
 								onBlur={() => cancelEdit()}
 								autoFocus
+								onClick={(e) => e.stopPropagation()}
 								placeholder={isNewChildNote ? "Enter note title... (Tab → content)" : "Tab → content"}
 								onKeyDown={(e) => {
 									handleTitleKeyDown(e, note);
@@ -163,6 +164,7 @@ const NoteListItem: React.FC<NoteListItemProps> = ({
 								contentTextareaRefs.current[note.id] = el; 
 							}}
 							onKeyDown={(e) => handleContentKeyDown(e, note)}
+							onClick={(e) => e.stopPropagation()}
 							placeholder="Tab → tags, Shift+Tab → title"
 						/>
 					</div>
@@ -206,6 +208,7 @@ const NoteListItem: React.FC<NoteListItemProps> = ({
 									}}
 									onKeyPress={(e) => handleKeyPress(e, note)}
 									onKeyDown={(e) => handleTagInputKeyDown(e, note)}
+									onClick={(e) => e.stopPropagation()}
 									placeholder="Add a tag..."
 								/>
 								<button

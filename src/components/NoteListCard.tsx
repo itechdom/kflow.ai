@@ -110,6 +110,7 @@ const NoteListCard: React.FC<NoteListCardProps> = ({
 							}}
 							onBlur={() => cancelEdit()}
 							autoFocus
+							onClick={(e) => e.stopPropagation()}
 							placeholder={isNewChildNote ? "Enter note title..." : "Enter title..."}
 							onKeyDown={(e) => {
 								if (e.key === 'Enter') {
@@ -150,6 +151,7 @@ const NoteListCard: React.FC<NoteListCardProps> = ({
 							contentTextareaRefs.current[note.id] = el; 
 						}}
 						onKeyDown={(e) => handleContentKeyDown(e, note)}
+						onClick={(e) => e.stopPropagation()}
 						placeholder="Tab → tags, Shift+Tab → title"
 					/>
 				) : (
@@ -191,6 +193,7 @@ const NoteListCard: React.FC<NoteListCardProps> = ({
 								}}
 								onKeyPress={(e) => handleKeyPress(e, note)}
 								onKeyDown={(e) => handleTagInputKeyDown(e, note)}
+								onClick={(e) => e.stopPropagation()}
 								placeholder="Add a tag..."
 							/>
 							<button
