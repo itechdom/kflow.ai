@@ -163,6 +163,8 @@ const MindMap: React.FC<MindMapProps> = ({
       // Only handle keyboard shortcuts when tree container is focused
       if (!isTreeContainerFocused) return;
       
+      // Arrow key navigation will be implemented after laidOutNodes is defined
+      
       if (e.ctrlKey && e.key === 'e' && selectedNote) {
         e.preventDefault();
         openContentEditor(selectedNote);
@@ -397,6 +399,139 @@ const MindMap: React.FC<MindMapProps> = ({
     
   }, [scrollTargetNote, laidOutNodes, containerWidth, containerHeight, onSelectNote]);
 
+  // Navigation helper functions for arrow key navigation
+  const findParentNote = useCallback((note: Note): Note | null => {
+    if (!note.parentId) return null;
+    return notes.find(n => n.id === note.parentId) || null;
+  }, [notes]);
+
+  const findFirstChildNote = useCallback((note: Note): Note | null => {
+    const children = notes.filter(n => n.parentId === note.id);
+    if (children.length === 0) return null;
+    
+    // Sort children by their position in the tree (left to right)
+    const sortedChildren = children.sort((a, b) => {
+      const aNode = laidOutNodes.find(n => n.id === a.id);
+      const bNode = laidOutNodes.find(n => n.id === b.id);
+      if (!aNode || !bNode) return 0;
+      return aNode.x - bNode.x;
+    });
+    
+    return sortedChildren[0];
+  }, [notes, laidOutNodes]);
+
+  const findPreviousSiblingNote = useCallback((note: Note): Note | null => {
+    if (!note.parentId) {
+      // For root notes, find previous root note
+      const rootNotes = notes.filter(n => !n.parentId);
+      const currentIndex = rootNotes.findIndex(n => n.id === note.id);
+      if (currentIndex <= 0) return null;
+      return rootNotes[currentIndex - 1];
+    }
+    
+    const siblings = notes.filter(n => n.parentId === note.parentId);
+    if (siblings.length <= 1) return null;
+    
+    // Sort siblings by their position in the tree (left to right)
+    const sortedSiblings = siblings.sort((a, b) => {
+      const aNode = laidOutNodes.find(n => n.id === a.id);
+      const bNode = laidOutNodes.find(n => n.id === b.id);
+      if (!aNode || !bNode) return 0;
+      return aNode.x - bNode.x;
+    });
+    
+    const currentIndex = sortedSiblings.findIndex(n => n.id === note.id);
+    if (currentIndex <= 0) return null;
+    return sortedSiblings[currentIndex - 1];
+  }, [notes, laidOutNodes]);
+
+  const findNextSiblingNote = useCallback((note: Note): Note | null => {
+    if (!note.parentId) {
+      // For root notes, find next root note
+      const rootNotes = notes.filter(n => !n.parentId);
+      const currentIndex = rootNotes.findIndex(n => n.id === note.id);
+      if (currentIndex === -1 || currentIndex >= rootNotes.length - 1) return null;
+      return rootNotes[currentIndex + 1];
+    }
+    
+    const siblings = notes.filter(n => n.parentId === note.parentId);
+    if (siblings.length <= 1) return null;
+    
+    // Sort siblings by their position in the tree (left to right)
+    const sortedSiblings = siblings.sort((a, b) => {
+      const aNode = laidOutNodes.find(n => n.id === a.id);
+      const bNode = laidOutNodes.find(n => n.id === b.id);
+      if (!aNode || !bNode) return 0;
+      return aNode.x - bNode.x;
+    });
+    
+    const currentIndex = sortedSiblings.findIndex(n => n.id === note.id);
+    if (currentIndex === -1 || currentIndex >= sortedSiblings.length - 1) return null;
+    return sortedSiblings[currentIndex + 1];
+  }, [notes, laidOutNodes]);
+
+  // Enhanced keyboard navigation with arrow keys
+  useEffect(() => {
+    const handleArrowNavigation = (e: KeyboardEvent) => {
+      // Only handle arrow keys when tree container is focused
+      if (!isTreeContainerFocused) return;
+      
+      // Arrow key navigation
+      if (e.key === 'ArrowUp' || e.key === 'ArrowDown' || e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
+        e.preventDefault();
+        if (!selectedNote) return;
+        
+        let nextNote: Note | null = null;
+        
+        switch (e.key) {
+          case 'ArrowUp':
+            // Navigate to parent
+            nextNote = findParentNote(selectedNote);
+            break;
+          case 'ArrowDown':
+            // Navigate to first child
+            nextNote = findFirstChildNote(selectedNote);
+            break;
+          case 'ArrowLeft':
+            // Navigate to previous sibling
+            nextNote = findPreviousSiblingNote(selectedNote);
+            break;
+          case 'ArrowRight':
+            // Navigate to next sibling
+            nextNote = findNextSiblingNote(selectedNote);
+            break;
+        }
+        
+        if (nextNote) {
+          onSelectNote(nextNote);
+          // Center the view on the selected note
+          const targetNode = laidOutNodes.find(node => node.id === nextNote!.id);
+          if (targetNode) {
+            const targetCenterX = targetNode.x;
+            const targetCenterY = targetNode.y;
+            const viewportCenterX = containerWidth / 2;
+            const viewportCenterY = containerHeight / 2;
+            const panOffsetX = viewportCenterX - targetCenterX;
+            const panOffsetY = viewportCenterY - targetCenterY;
+            setPan({ x: panOffsetX, y: panOffsetY });
+            
+            // Add visual feedback for keyboard navigation
+            const nodeElement = document.querySelector(`[data-node-id="${nextNote.id}"]`);
+            if (nodeElement) {
+              nodeElement.classList.add('keyboard-navigated');
+              setTimeout(() => {
+                nodeElement.classList.remove('keyboard-navigated');
+              }, 300);
+            }
+          }
+        }
+      }
+    };
+
+    document.addEventListener('keydown', handleArrowNavigation);
+    return () => document.removeEventListener('keydown', handleArrowNavigation);
+  }, [isTreeContainerFocused, selectedNote, findParentNote, findFirstChildNote, findPreviousSiblingNote, findNextSiblingNote, onSelectNote, laidOutNodes, containerWidth, containerHeight]);
+
   const handleNodeClick = useCallback((node: TreeNode) => {
     if (node.id === 'virtual-root') return;
     const note = notes.find(n => n.id === node.id);
@@ -432,6 +567,7 @@ const MindMap: React.FC<MindMapProps> = ({
     return (
       <g
         key={node.id}
+        data-node-id={node.id}
         transform={`translate(${transformedX}, ${transformedY})`}
         className={`mindmap-node ${isSelected ? 'selected' : ''} ${isHovered ? 'hovered' : ''}`}
         onClick={() => handleNodeClick(node)}
@@ -607,9 +743,9 @@ const MindMap: React.FC<MindMapProps> = ({
     >
       <div className="mindmap-header">
         <div className="controls">
-          <div className="edit-hint">
-            <span className="hint-text">💡 Click on the tree area to enable keyboard shortcuts • Double-click nodes to edit titles • Click blue edit button inside nodes for content • Green clip icon = has content • Right-click for menu • Ctrl+E to edit content</span>
-          </div>
+                  <div className="edit-hint">
+          <span className="hint-text">💡 Click on the tree area to enable keyboard shortcuts • Use ↑↓←→ arrow keys to navigate • Double-click nodes to edit titles • Click blue edit button inside nodes for content • Green clip icon = has content • Right-click for menu • Ctrl+E to edit content</span>
+        </div>
           <div className="zoom-controls">
             <button 
               className="zoom-btn" 

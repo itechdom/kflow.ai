@@ -2451,3 +2451,39 @@ body {
     -webkit-line-clamp: 1;
   }
 }
+
+/* MindMap Node Styles */
+.mindmap-node {
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.mindmap-node.selected {
+  filter: drop-shadow(0 0 8px rgba(59, 130, 246, 0.6));
+}
+
+.mindmap-node.hovered {
+  filter: drop-shadow(0 0 4px rgba(59, 130, 246, 0.4));
+}
+
+/* Keyboard navigation feedback */
+.mindmap-node.keyboard-navigated {
+  animation: keyboardNavigate 0.3s ease-out;
+}
+
+@keyframes keyboardNavigate {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+/* Smooth pan transitions for keyboard navigation */
+.tree-container {
+  transition: transform 0.3s ease-out;
+}
