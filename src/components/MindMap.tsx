@@ -185,11 +185,22 @@ const MindMap: React.FC<MindMapProps> = ({
           onDeleteNote(selectedNote.id);
         }
       }
+      if(e.key === 'f' || e.key === 'F') {
+        e.preventDefault();
+        if (selectedNote) {
+          // Toggle expansion state
+          const updatedNote = {
+            ...selectedNote,
+            isExpanded: !selectedNote.isExpanded
+          };
+          onEditNote(updatedNote);
+        }
+      }
     };
 
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [selectedNote, editingState, openContentEditor, isTreeContainerFocused, handleAddChildNote, onDeleteNote]);
+  }, [selectedNote, editingState, openContentEditor, isTreeContainerFocused, handleAddChildNote, onDeleteNote, onEditNote]);
 
   	// Auto-edit newly created child notes
 	useEffect(() => {
@@ -283,12 +294,16 @@ const MindMap: React.FC<MindMapProps> = ({
       });
     });
 
-    // Build hierarchy
+    // Build hierarchy - only include children of expanded notes
     nodesMap.forEach(node => {
       if (node.parentId) {
         const parent = nodesMap.get(node.parentId);
         if (parent) {
-          parent.children.push(node);
+          // Check if parent is expanded before adding children
+          const parentNote = notes.find(n => n.id === node.parentId);
+          if (parentNote && parentNote.isExpanded) {
+            parent.children.push(node);
+          }
         }
       } else {
         rootNodes.push(node);
@@ -710,7 +725,7 @@ const MindMap: React.FC<MindMapProps> = ({
         key={node.id}
         data-node-id={node.id}
         transform={`translate(${transformedX}, ${transformedY})`}
-        className={`mindmap-node ${isSelected ? 'selected' : ''} ${isHovered ? 'hovered' : ''}`}
+        className={`mindmap-node ${isSelected ? 'selected' : ''} ${isHovered ? 'hovered' : ''} ${note && !note.isExpanded && note.children && note.children.length > 0 ? 'collapsed' : ''}`}
         onClick={() => handleNodeClick(node)}
         onDoubleClick={(e) => {
           e.stopPropagation();
@@ -729,7 +744,11 @@ const MindMap: React.FC<MindMapProps> = ({
           height={transformedHeight}
           rx="8"
           ry="8"
-          className="node-rect"
+          className={`node-rect ${note && !note.isExpanded && note.children && note.children.length > 0 ? 'collapsed' : ''}`}
+          style={{
+            opacity: note && !note.isExpanded && note.children && note.children.length > 0 ? 0.7 : 1,
+            strokeDasharray: note && !note.isExpanded && note.children && note.children.length > 0 ? '5,5' : 'none'
+          }}
         />
         
         {isEditingTitle ? (
@@ -806,6 +825,51 @@ const MindMap: React.FC<MindMapProps> = ({
             </div>
           </foreignObject>
         )}
+
+        {/* Expand/Collapse Indicator - Show if note has children */}
+        {node.id !== 'virtual-root' && !isEditingTitle && note && note.children && note.children.length > 0 && (
+          <foreignObject x={transformedWidth - 25} y="20" width="20" height="20">
+            <div style={{ width: '100%', height: '100%' }}>
+              <button
+                className={`expand-collapse-btn ${note.isExpanded ? 'expanded' : 'collapsed'}`}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (note) {
+                    const updatedNote = {
+                      ...note,
+                      isExpanded: !note.isExpanded
+                    };
+                    onEditNote(updatedNote);
+                  }
+                }}
+                title={note.isExpanded ? 'Collapse (F)' : 'Expand (F)'}
+                style={{
+                  width: '100%',
+                  height: '100%',
+                  border: 'none',
+                  background: note.isExpanded ? 'rgba(245, 158, 11, 0.2)' : 'rgba(156, 163, 175, 0.2)',
+                  borderRadius: '4px',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  transition: 'all 0.2s',
+                  color: note.isExpanded ? '#f59e0b' : '#9ca3af'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = note.isExpanded ? 'rgba(245, 158, 11, 0.3)' : 'rgba(156, 163, 175, 0.3)';
+                  e.currentTarget.style.transform = 'scale(1.1)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = note.isExpanded ? 'rgba(245, 158, 11, 0.2)' : 'rgba(156, 163, 175, 0.2)';
+                  e.currentTarget.style.transform = 'scale(1)';
+                }}
+              >
+                {note.isExpanded ? '−' : '+'}
+              </button>
+            </div>
+          </foreignObject>
+        )}
         
         {/* Content Indicator - Show clip icon if node has actual content */}
         {node.id !== 'virtual-root' && note && note.content && note.content.trim() !== '' && note.content !== 'Add your content here...' && (
@@ -844,7 +908,7 @@ const MindMap: React.FC<MindMapProps> = ({
         )}
       </g>
     );
-  }, [handleNodeClick, handleNodeHover, selectedNote, hoveredNode, notes, onAddChildNote, onNavigateToNote, zoom, pan, editingState, editValues, startEditing, handleTitleKeyDown, saveEdit, handleNodeRightClick, openContentEditor]);
+  }, [handleNodeClick, handleNodeHover, selectedNote, hoveredNode, notes, onAddChildNote, onNavigateToNote, zoom, pan, editingState, editValues, startEditing, handleTitleKeyDown, saveEdit, handleNodeRightClick, openContentEditor, onEditNote]);
 
   // Render connections
   const renderConnections = useCallback(() => {
@@ -885,8 +949,8 @@ const MindMap: React.FC<MindMapProps> = ({
       <div className="mindmap-header">
         <div className="controls">
                   <div className="edit-hint">
-          <span className="hint-text">💡 Click on the tree area to enable keyboard shortcuts • Use ↑↓←→ arrow keys to navigate • Double-click nodes to edit titles • Click blue edit button inside nodes for content • Green clip icon = has content • Right-click for menu • Ctrl+E to edit content</span>
-        </div>
+            <span className="hint-text">💡 Click on the tree area to enable keyboard shortcuts • Use ↑↓←→ arrow keys to navigate • Press F to expand/collapse notes • Double-click nodes to edit titles • Click blue edit button inside nodes for content • Orange +/- icon = expandable • Green clip icon = has content • Right-click for menu • Ctrl+E to edit content</span>
+          </div>
           <div className="zoom-controls">
             <button 
               className="zoom-btn" 
