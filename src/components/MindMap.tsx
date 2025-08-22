@@ -311,12 +311,13 @@ const MindMap: React.FC<MindMapProps> = ({
     return null;
   }, [notes]);
 
-  // Layout the tree
-  const layoutTree = useCallback((node: TreeNode, x: number, y: number, level: number, siblingIndex: number, totalSiblings: number): { nodes: TreeNode[], connections: { source: TreeNode, target: TreeNode }[] } => {
+  // Enhanced layout the tree with collision detection and prevention
+  const layoutTree = useCallback((node: TreeNode, x: number, y: number, level: number, siblingIndex: number, totalSiblings: number): { nodes: TreeNode[], connections: { source: TreeNode, target: TreeNode }[], totalWidth: number } => {
     const nodeWidth = 150;
     const nodeHeight = 60;
     const horizontalSpacing = 200;
     const verticalSpacing = 100;
+    const groupSpacing = 100; // Additional spacing between different parent groups
 
     node.x = x;
     node.y = y;
@@ -326,33 +327,173 @@ const MindMap: React.FC<MindMapProps> = ({
 
     const nodes: TreeNode[] = [node];
     const connections: { source: TreeNode, target: TreeNode }[] = [];
+    let totalWidth = nodeWidth;
 
     if (node.children.length > 0) {
-      const totalChildrenWidth = node.children.length * nodeWidth + (node.children.length - 1) * horizontalSpacing;
-      let currentChildX = x - totalChildrenWidth / 2 + nodeWidth / 2;
-
-      node.children.forEach((child, index) => {
-        connections.push({ source: node, target: child });
-        const childLayout = layoutTree(child, currentChildX, y + verticalSpacing, level + 1, index, node.children.length);
+      // First pass: calculate the total width needed for all children
+      let totalChildrenWidth = 0;
+      const childWidths: number[] = [];
+      
+      for (let i = 0; i < node.children.length; i++) {
+        const child = node.children[i];
+        const childLayout = layoutTree(child, 0, y + verticalSpacing, level + 1, i, node.children.length);
+        childWidths.push(childLayout.totalWidth);
+        totalChildrenWidth += childLayout.totalWidth;
+      }
+      
+      // Add spacing between children
+      if (node.children.length > 1) {
+        totalChildrenWidth += (node.children.length - 1) * horizontalSpacing;
+      }
+      
+      totalWidth = Math.max(nodeWidth, totalChildrenWidth);
+      
+      // Second pass: position children with proper spacing
+      let currentChildX = x - totalChildrenWidth / 2 + childWidths[0] / 2;
+      
+      for (let i = 0; i < node.children.length; i++) {
+        const child = node.children[i];
+        const childLayout = layoutTree(child, currentChildX, y + verticalSpacing, level + 1, i, node.children.length);
+        
+        // Update child position to match the calculated position
+        childLayout.nodes.forEach(childNode => {
+          if (childNode.id === child.id) {
+            childNode.x = currentChildX;
+          }
+        });
+        
         nodes.push(...childLayout.nodes);
+        connections.push({ source: node, target: child });
         connections.push(...childLayout.connections);
-        currentChildX += nodeWidth + horizontalSpacing;
-      });
+        
+        // Move to next child position
+        currentChildX += childWidths[i] / 2 + horizontalSpacing + childWidths[i + 1] / 2;
+      }
     }
 
-    return { nodes, connections };
+    return { nodes, connections, totalWidth };
   }, []);
 
+  // Helper function to calculate bounds of a group of nodes
+  const calculateGroupBounds = useCallback((nodes: TreeNode[]): { minX: number; maxX: number } => {
+    let minX = Infinity;
+    let maxX = -Infinity;
+    
+    nodes.forEach(node => {
+      minX = Math.min(minX, node.x - node.width / 2);
+      maxX = Math.max(maxX, node.x + node.width / 2);
+    });
+    
+    return { minX, maxX };
+  }, []);
+
+  // Helper function to move a group of nodes and all their descendants
+  const moveGroup = useCallback((nodes: TreeNode[], offset: number, allNodes: TreeNode[]) => {
+    const nodeIds = new Set<string>();
+    
+    // Collect all node IDs in this group and their descendants
+    const collectNodeIds = (nodeList: TreeNode[]) => {
+      nodeList.forEach(node => {
+        nodeIds.add(node.id);
+        const children = allNodes.filter(n => n.parentId === node.id);
+        if (children.length > 0) {
+          collectNodeIds(children);
+        }
+      });
+    };
+    
+    collectNodeIds(nodes);
+    
+    // Move all collected nodes
+    allNodes.forEach(node => {
+      if (nodeIds.has(node.id)) {
+        node.x += offset;
+      }
+    });
+  }, []);
+
+  // Enhanced tree layout with collision detection and prevention
   const { nodes: laidOutNodes, connections: laidOutConnections } = useMemo(() => {
     if (!treeData) return { nodes: [], connections: [] };
 
-    // Calculate initial layout assuming root at (0,0)
-    const { nodes, connections } = layoutTree(treeData, 0, 0, 0, 0, 1);
-
+    // Phase 1: Calculate initial layout and get total widths
+    const { nodes, connections, totalWidth } = layoutTree(treeData, 0, 0, 0, 0, 1);
+    
+    // Phase 2: Detect and resolve overlapping between different parent groups
+    const resolvedNodes = [...nodes];
+    const resolvedConnections = [...connections];
+    
+    // Group nodes by their parent and level
+    const nodesByLevel = new Map<number, TreeNode[]>();
+    nodes.forEach(node => {
+      if (!nodesByLevel.has(node.level)) {
+        nodesByLevel.set(node.level, []);
+      }
+      nodesByLevel.get(node.level)!.push(node);
+    });
+    
+    // For each level, check for overlapping between different parent groups
+    const levels = Array.from(nodesByLevel.keys()).sort((a, b) => a - b);
+    for (let level = 1; level <= Math.max(...levels); level++) {
+      const levelNodes = nodesByLevel.get(level) || [];
+      const parentGroups = new Map<string, TreeNode[]>();
+      
+      // Group nodes by their parent
+      levelNodes.forEach(node => {
+        const parent = nodes.find(n => n.id === node.parentId);
+        if (parent) {
+          if (!parentGroups.has(parent.id)) {
+            parentGroups.set(parent.id, []);
+          }
+          parentGroups.get(parent.id)!.push(node);
+        }
+      });
+      
+      // Sort parent groups by their leftmost position
+      const sortedParentGroups = Array.from(parentGroups.entries()).sort(([, group1], [, group2]) => {
+        const bounds1 = calculateGroupBounds(group1);
+        const bounds2 = calculateGroupBounds(group2);
+        return bounds1.minX - bounds2.minX;
+      });
+      
+      // Check for overlapping between adjacent parent groups
+      for (let i = 0; i < sortedParentGroups.length - 1; i++) {
+        const [, group1] = sortedParentGroups[i];
+        const [, group2] = sortedParentGroups[i + 1];
+        
+        // Calculate bounds for each group
+        const group1Bounds = calculateGroupBounds(group1);
+        const group2Bounds = calculateGroupBounds(group2);
+        
+        // Check if groups overlap (with some buffer)
+        const buffer = 50;
+        if (group1Bounds.maxX + buffer >= group2Bounds.minX) {
+          // Groups overlap, need to separate them
+          const overlap = group1Bounds.maxX + buffer - group2Bounds.minX;
+          const separation = overlap + 100; // Add extra spacing
+          
+          console.log(`Collision detected between groups at level ${level}:`, {
+            group1: group1[0]?.parentId,
+            group2: group2[0]?.parentId,
+            overlap,
+            separation,
+            group1Bounds,
+            group2Bounds
+          });
+          
+          // Move group2 and all groups to its right
+          for (let j = i + 1; j < sortedParentGroups.length; j++) {
+            const [, groupToMove] = sortedParentGroups[j];
+            moveGroup(groupToMove, separation, resolvedNodes);
+          }
+        }
+      }
+    }
+    
     // Find min/max X to center the tree
     let minX = Infinity;
     let maxX = -Infinity;
-    nodes.forEach(node => {
+    resolvedNodes.forEach(node => {
       minX = Math.min(minX, node.x - node.width / 2);
       maxX = Math.max(maxX, node.x + node.width / 2);
     });
@@ -361,12 +502,12 @@ const MindMap: React.FC<MindMapProps> = ({
     const offsetX = (containerWidth / 2) - (minX + treeWidth / 2);
 
     // Apply offset to all nodes
-    nodes.forEach(node => {
+    resolvedNodes.forEach(node => {
       node.x += offsetX;
     });
 
-    return { nodes, connections };
-  }, [treeData, layoutTree, containerWidth]);
+    return { nodes: resolvedNodes, connections: resolvedConnections };
+  }, [treeData, layoutTree, containerWidth, calculateGroupBounds, moveGroup]);
 
   // Scroll to target note when searching
   useEffect(() => {
