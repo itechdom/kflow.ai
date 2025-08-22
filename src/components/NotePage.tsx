@@ -126,7 +126,9 @@ const NotePage: React.FC = () => {
   }
 
   const handleNoteClick = (note: Note) => {
-    navigate(`/note/${note.id}`);
+    if(!note.parentId){
+      navigate(`/note/${note.id}`);
+    }
   };
 
   const handleNoteSelect = (note: Note) => {

@@ -86,9 +86,7 @@ const NoteListCard: React.FC<NoteListCardProps> = ({
 			onClick={(e) => {
 				e.stopPropagation();
 				onSelectNote(note);
-				if (!note.parentId) {
-					onNavigateToNote(note);
-				}
+				onNavigateToNote(note);
 			}}
 			style={{ 
 				marginLeft: `${displayDepth * 20}px`,

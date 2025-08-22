@@ -25,7 +25,9 @@ const HomePage: React.FC = () => {
     // First select the note to ensure it's properly set in state
     dispatch(selectNote(note));
     // Then navigate to the note page
-    navigate(`/note/${note.id}`);
+    if(!note.parentId){
+      navigate(`/note/${note.id}`);
+    }
   };
 
   const handleSelectNote = (note: Note) => {

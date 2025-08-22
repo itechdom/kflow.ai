@@ -89,9 +89,7 @@ const NoteListItem: React.FC<NoteListItemProps> = ({
 				e.stopPropagation();
 				// Only navigate if it's a root note (no parent)
 				onSelectNote(note);
-				if (!note.parentId) {
-					onNavigateToNote(note);
-				}
+			    onNavigateToNote(note);
 			}}
 			style={{ 
 				marginLeft: `${displayDepth * 20}px`,
