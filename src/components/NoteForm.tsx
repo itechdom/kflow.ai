@@ -49,7 +49,7 @@ const NoteForm: React.FC<NoteFormProps> = ({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!title.trim()) {
       alert('Please enter a title for the note');
       return;
@@ -86,13 +86,14 @@ const NoteForm: React.FC<NoteFormProps> = ({
           autoFocus
         />
       </div>
-      
+
       <div className="form-group">
         <label htmlFor="note-content">Content:</label>
         <textarea
           id="note-content"
           value={content}
           onChange={(e) => setContent(e.target.value)}
+          onScroll={e => e.stopPropagation()}
           className="form-textarea"
           rows={8}
           placeholder="Enter note content..."
@@ -135,14 +136,14 @@ const NoteForm: React.FC<NoteFormProps> = ({
       </div>
 
       <div className="modal-footer">
-        <button 
+        <button
           type="button"
           className="btn btn-secondary"
           onClick={onCancel}
         >
           Cancel
         </button>
-        <button 
+        <button
           type="submit"
           className="btn btn-primary"
         >

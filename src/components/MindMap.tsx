@@ -45,6 +45,7 @@ const MindMap: React.FC<MindMapProps> = ({
   scrollTargetNote
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
+  const titleInputRefs = useRef<Record<string, HTMLInputElement | null>>({});
   const [hoveredNode, setHoveredNode] = useState<TreeNode | null>(null);
   const [containerWidth, setContainerWidth] = useState(800);
   const [containerHeight, setContainerHeight] = useState(600);
@@ -212,6 +213,15 @@ const MindMap: React.FC<MindMapProps> = ({
       title: note.title,
       content: note.content
     });
+
+    if (field === 'title' && note.title === 'New Child Note') {
+			setTimeout(() => {
+				if (titleInputRefs.current[note.id]) {
+					titleInputRefs.current[note.id]?.focus();
+					titleInputRefs.current[note.id]?.select(); // Select all text for easy replacement
+				}
+			}, 50);
+		}
     
     if (field === 'content') {
       setEditingNote(note);
@@ -444,6 +454,7 @@ const MindMap: React.FC<MindMapProps> = ({
                 value={editValues.title}
                 onChange={(e) => setEditValues({ ...editValues, title: e.target.value })}
                 onKeyDown={(e) => handleTitleKeyDown(e, note!)}
+                ref={(el) => { titleInputRefs.current[note!.id] = el; }}
                 onBlur={() => saveEdit(note!)}
                 style={{
                   width: '100%',
