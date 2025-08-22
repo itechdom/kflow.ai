@@ -11,6 +11,7 @@ interface MindMapProps {
   onCreateNote: () => void;
   onAddChildNote: (parentNote: Note) => void;
   onNavigateToNote: (note: Note) => void;
+  scrollTargetNote?: Note;
 }
 
 interface TreeNode {
@@ -38,11 +39,11 @@ const MindMap: React.FC<MindMapProps> = ({
   onEditNote,
   onCreateNote,
   onAddChildNote,
-  onNavigateToNote
+  onNavigateToNote,
+  scrollTargetNote
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const [hoveredNode, setHoveredNode] = useState<TreeNode | null>(null);
-  const [searchQuery, setSearchQuery] = useState('');
   const [containerWidth, setContainerWidth] = useState(800);
   const [containerHeight, setContainerHeight] = useState(600);
   const [zoom, setZoom] = useState(1);
@@ -344,6 +345,37 @@ const MindMap: React.FC<MindMapProps> = ({
     return { nodes, connections };
   }, [treeData, layoutTree, containerWidth]);
 
+  // Scroll to target note when searching
+  useEffect(() => {
+    if (!scrollTargetNote) return;
+    
+    // Find the target note in the laid out nodes
+    const targetNode = laidOutNodes.find(node => node.id === scrollTargetNote.id);
+    if (!targetNode) return;
+    
+    // Calculate the center position of the target node
+    const targetCenterX = targetNode.x;
+    const targetCenterY = targetNode.y;
+    
+    // Calculate the center of the viewport
+    const viewportCenterX = containerWidth / 2;
+    const viewportCenterY = containerHeight / 2;
+    
+    // Calculate the pan offset needed to center the target node
+    const panOffsetX = viewportCenterX - targetCenterX;
+    const panOffsetY = viewportCenterY - targetCenterY;
+    
+    // Apply the pan offset smoothly
+    setPan({
+      x: panOffsetX,
+      y: panOffsetY
+    });
+    
+    // Also select the note
+    onSelectNote(scrollTargetNote);
+    
+  }, [scrollTargetNote, laidOutNodes, containerWidth, containerHeight, onSelectNote]);
+
   const handleNodeClick = useCallback((node: TreeNode) => {
     if (node.id === 'virtual-root') return;
     const note = notes.find(n => n.id === node.id);
@@ -366,11 +398,9 @@ const MindMap: React.FC<MindMapProps> = ({
   const renderNode = useCallback((node: TreeNode) => {
     const isSelected = selectedNote?.id === node.id;
     const isHovered = hoveredNode?.id === node.id;
-    const isFiltered = searchQuery ? node.title.toLowerCase().includes(searchQuery.toLowerCase()) : true;
     const isEditingTitle = editingState?.noteId === node.id && editingState?.field === 'title';
     const note = notes.find(n => n.id === node.id);
 
-    if (!isFiltered && node.id !== 'virtual-root') return null; // Hide if not filtered and not virtual root
 
     // Apply zoom and pan transformations
     const transformedX = (node.x - node.width / 2) * zoom + pan.x;
@@ -515,7 +545,7 @@ const MindMap: React.FC<MindMapProps> = ({
         )}
       </g>
     );
-  }, [handleNodeClick, handleNodeHover, selectedNote, hoveredNode, searchQuery, notes, onAddChildNote, onNavigateToNote, zoom, pan, editingState, editValues, startEditing, handleTitleKeyDown, saveEdit, handleNodeRightClick, openContentEditor]);
+  }, [handleNodeClick, handleNodeHover, selectedNote, hoveredNode, notes, onAddChildNote, onNavigateToNote, zoom, pan, editingState, editValues, startEditing, handleTitleKeyDown, saveEdit, handleNodeRightClick, openContentEditor]);
 
   // Render connections
   const renderConnections = useCallback(() => {
@@ -540,9 +570,7 @@ const MindMap: React.FC<MindMapProps> = ({
     });
   }, [laidOutConnections, zoom, pan]);
 
-  const filteredNodes = laidOutNodes.filter(node =>
-    node.id === 'virtual-root' || node.title.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredNodes = laidOutNodes;
 
   return (
     <div 
@@ -556,15 +584,6 @@ const MindMap: React.FC<MindMapProps> = ({
       style={{ cursor: isDragging ? 'grabbing' : 'grab' }}
     >
       <div className="mindmap-header">
-        <div className="search-section">
-          <input
-            type="text"
-            placeholder="Search notes..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="search-input"
-          />
-        </div>
         <div className="controls">
           <div className="edit-hint">
             <span className="hint-text">💡 Click on the tree area to enable keyboard shortcuts • Double-click nodes to edit titles • Click blue edit button inside nodes for content • Green clip icon = has content • Right-click for menu • Ctrl+E to edit content</span>

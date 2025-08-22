@@ -231,6 +231,7 @@ const NotePage: React.FC = () => {
               onCreateNote={handleCreateNote}
               onAddChildNote={handleAddChildNote}
               onNavigateToNote={handleNoteSelect}
+              scrollTargetNote={scrollTargetNote}
             />
           ) : (
             <NoteList 
