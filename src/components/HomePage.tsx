@@ -112,6 +112,10 @@ const HomePage: React.FC = () => {
           <SearchBar
             searchQuery={searchQuery}
             onSearchChange={handleSearchChange}
+            notes={notes}
+            onSelectSuggestion={(note) => {
+              handleNoteClick(note);
+            }}
           />          
             <NoteList 
               notes={filteredNotes}

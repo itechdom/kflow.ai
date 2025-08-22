@@ -26,14 +26,24 @@ const NotePage: React.FC = () => {
   // When searching in NotePage sidebar, if a unique match is found within the sidebar set,
   // ensure it is expanded (and its ancestors), scroll to it, and select it
   useEffect(() => {
-    if (!searchQuery.trim()) return;
+    if (!searchQuery.trim()){
+      setScrollTargetNote(undefined);
+      return;
+    };
     // Consider matches within the sidebar scope
     const sidebarIds = new Set(sidebarNotes.map(n => n.id));
     const matches = notes.filter(n => sidebarIds.has(n.id) && (
       n.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       n.content.toLowerCase().includes(searchQuery.toLowerCase())
     ));
-    if (matches.length !== 1) return;
+    if (matches.length > 1){
+      setScrollTargetNote(matches[0]);
+      return;
+    }
+    else if(matches.length === 0){
+      setScrollTargetNote(undefined);
+      return;
+    }
     const match = matches[0];
 
     // Expand ancestors up to root
@@ -218,7 +228,13 @@ const NotePage: React.FC = () => {
         <div className="sidebar">
           <SearchBar 
             searchQuery={searchQuery} 
-            onSearchChange={setSearchQuery} 
+            onSearchChange={setSearchQuery}
+            notes={sidebarNotes}
+            onSelectSuggestion={(note) => {
+              // Navigate to the selected note
+              handleNoteSelect(note);
+              setScrollTargetNote(note);
+            }}
           />
           
           {viewMode === 'mindmap' ? (
