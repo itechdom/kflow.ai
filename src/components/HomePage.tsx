@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router';
 import { useAppSelector, useAppDispatch } from '../store/hooks';
 import { selectNote, deleteNote, addChildNote, createNote, setSearchQuery, editNote, toggleNoteExpanded, expandNote } from '../store/noteSlice';
@@ -12,7 +12,6 @@ const HomePage: React.FC = () => {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
   const [showCreateModal, setShowCreateModal] = useState(false);
-  
   // Get state from Redux
   const { notes, selectedNote, searchQuery } = useAppSelector(state => state.notes);
 
@@ -139,6 +138,7 @@ const HomePage: React.FC = () => {
         isOpen={showCreateModal}
         onClose={handleCancelCreate}
         title="Create New Note"
+        size="extra-large"
       >
         <NoteForm
           onSave={handleSaveNote}

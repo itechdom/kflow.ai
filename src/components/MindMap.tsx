@@ -1184,6 +1184,7 @@ const MindMap: React.FC<MindMapProps> = ({
         isOpen={showContentModal}
         onClose={() => setShowContentModal(false)}
         title="Edit Note Content"
+        size="extra-large"
       >
         {editingNote && (
           <NoteForm

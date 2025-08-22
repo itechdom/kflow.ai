@@ -1,17 +1,16 @@
 import React, { useState } from 'react';
-import { Note } from '../types/Note';
 import { Sparkles, Loader2 } from 'lucide-react';
 
 interface AIGeneratorProps {
-  onGenerateNote: (note: Note) => void;
+  onFillForm: (data: { title: string; content: string; tags: string[] }) => void;
 }
 
-const AIGenerator: React.FC<AIGeneratorProps> = ({ onGenerateNote }) => {
+const AIGenerator: React.FC<AIGeneratorProps> = ({ onFillForm }) => {
   const [prompt, setPrompt] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState('');
 
-  const generateNote = async () => {
+  const generateContent = async () => {
     if (!prompt.trim()) return;
 
     setIsGenerating(true);
@@ -29,27 +28,22 @@ const AIGenerator: React.FC<AIGeneratorProps> = ({ onGenerateNote }) => {
       });
 
       if (!response.ok) {
-        throw new Error('Failed to generate note');
+        throw new Error('Failed to generate content');
       }
 
       const data = await response.json();
       
-      const generatedNote: Note = {
-        id: Date.now().toString(),
-        title: data.title || 'AI Generated Note',
+      // Fill the form with generated content instead of creating a note
+      onFillForm({
+        title: data.title || 'AI Generated Title',
         content: data.content || '',
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        tags: data.tags || [],
-        level: 0,
-        isExpanded: false
-      };
+        tags: data.tags || []
+      });
 
-      onGenerateNote(generatedNote);
       setPrompt('');
     } catch (err) {
-      setError('Failed to generate note. Please try again.');
-      console.error('Error generating note:', err);
+      setError('Failed to generate content. Please try again.');
+      console.error('Error generating content:', err);
     } finally {
       setIsGenerating(false);
     }
@@ -58,7 +52,7 @@ const AIGenerator: React.FC<AIGeneratorProps> = ({ onGenerateNote }) => {
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
-      generateNote();
+      generateContent();
     }
   };
 
@@ -67,14 +61,14 @@ const AIGenerator: React.FC<AIGeneratorProps> = ({ onGenerateNote }) => {
       <div className="ai-header">
         <h3>
           <Sparkles size={16} />
-          AI Note Generator
+          AI Content Generator
         </h3>
       </div>
       
       <div className="ai-input-section">
         <textarea
           className="ai-prompt-input"
-          placeholder="Describe what kind of note you want to generate..."
+          placeholder="Describe what kind of content you want to generate..."
           value={prompt}
           onChange={(e) => setPrompt(e.target.value)}
           onKeyPress={handleKeyPress}
@@ -84,7 +78,7 @@ const AIGenerator: React.FC<AIGeneratorProps> = ({ onGenerateNote }) => {
         
         <button
           className="generate-btn"
-          onClick={generateNote}
+          onClick={generateContent}
           disabled={!prompt.trim() || isGenerating}
         >
           {isGenerating ? (
@@ -95,7 +89,7 @@ const AIGenerator: React.FC<AIGeneratorProps> = ({ onGenerateNote }) => {
           ) : (
             <>
               <Sparkles size={16} />
-              Generate Note
+              Generate Content
             </>
           )}
         </button>
@@ -106,33 +100,6 @@ const AIGenerator: React.FC<AIGeneratorProps> = ({ onGenerateNote }) => {
           {error}
         </div>
       )}
-
-      <div className="ai-examples">
-        <p className="examples-title">Try these examples:</p>
-        <div className="example-prompts">
-          <button
-            className="example-btn"
-            onClick={() => setPrompt('Meeting notes template for project planning')}
-            disabled={isGenerating}
-          >
-            Meeting notes template
-          </button>
-          <button
-            className="example-btn"
-            onClick={() => setPrompt('Daily journal entry about productivity tips')}
-            disabled={isGenerating}
-          >
-            Journal entry
-          </button>
-          <button
-            className="example-btn"
-            onClick={() => setPrompt('Study guide for React fundamentals')}
-            disabled={isGenerating}
-          >
-            Study guide
-          </button>
-        </div>
-      </div>
     </div>
   );
 };

@@ -1,7 +1,6 @@
-import React, { useState, useCallback, useEffect, useRef } from 'react';
+import React, { useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import { Note } from '../types/Note';
-import { Plus } from 'lucide-react';
-import AIGenerator from './AIGenerator';
+import { Plus, Edit3, Trash2, Save, X, Tag } from 'lucide-react';
 import NoteListItem from './NoteListItem';
 import NoteListCard from './NoteListCard';
 
@@ -322,19 +321,6 @@ const NoteList: React.FC<NoteListProps> = ({
 		}
 	};
 
-	const handleGenerateNote = (generatedNote: Note) => {
-		if (selectedNote) {
-			const updatedNote = {
-				...selectedNote,
-				title: generatedNote.title,
-				content: generatedNote.content,
-				tags: generatedNote.tags,
-				updatedAt: new Date()
-			};
-			onEditNote(updatedNote);
-		}
-	};
-
 	return (
 		<div className="note-list">
 			<div className="note-list-header">
@@ -379,13 +365,6 @@ const NoteList: React.FC<NoteListProps> = ({
 					getRootNotes().map(note => renderNoteItem(note))
 				)}
 			</div>
-
-			{/* AI Generator for the selected note */}
-			{selectedNote && (
-				<div className="ai-generator-section">
-					<AIGenerator onGenerateNote={handleGenerateNote} />
-				</div>
-			)}
 		</div>
 	);
 };
