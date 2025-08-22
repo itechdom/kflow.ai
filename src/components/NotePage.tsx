@@ -181,6 +181,10 @@ const NotePage: React.FC = () => {
     dispatch(expandNote(noteId));
   };
 
+  const onSetScrollTargetNote = (note: Note | undefined) => {
+    setScrollTargetNote(note);
+  };
+
   return (
     <div className="note-page">
       <div className="note-page-header">
@@ -248,6 +252,7 @@ const NotePage: React.FC = () => {
               onAddChildNote={handleAddChildNote}
               onNavigateToNote={handleNoteSelect}
               scrollTargetNote={scrollTargetNote}
+              onSetScrollTargetNote={onSetScrollTargetNote}
             />
           ) : (
             <NoteList 

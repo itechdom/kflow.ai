@@ -14,6 +14,7 @@ interface MindMapProps {
   onAddChildNote: (parentNote: Note) => void;
   onNavigateToNote: (note: Note) => void;
   scrollTargetNote?: Note;
+  onSetScrollTargetNote: (note: Note | undefined) => void;
 }
 
 interface TreeNode {
@@ -42,7 +43,8 @@ const MindMap: React.FC<MindMapProps> = ({
   onCreateNote,
   onAddChildNote,
   onNavigateToNote,
-  scrollTargetNote
+  scrollTargetNote,
+  onSetScrollTargetNote
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const titleInputRefs = useRef<Record<string, HTMLInputElement | null>>({});
@@ -213,6 +215,7 @@ const MindMap: React.FC<MindMapProps> = ({
       title: note.title,
       content: note.content
     });
+    onSetScrollTargetNote(note);
 
     if (field === 'title' && note.title === 'New Child Note') {
 			setTimeout(() => {
@@ -243,6 +246,7 @@ const MindMap: React.FC<MindMapProps> = ({
     };
     onEditNote(updatedNote);
     cancelEdit();
+    onSetScrollTargetNote(undefined);
   }, [editValues.title, editValues.content, onEditNote, cancelEdit]);
 
   const handleTitleKeyDown = useCallback((e: React.KeyboardEvent, note: Note) => {
