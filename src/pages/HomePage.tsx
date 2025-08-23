@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router';
 import { useAppSelector, useAppDispatch } from '../app/hooks';
-import { selectNote, deleteNote, addChildNote, createNote, setSearchQuery, editNote, toggleNoteExpanded, expandNote } from '../app/noteSlice';
+import { selectNote, deleteNote, addChildNote, createNote, setSearchQuery, editNote, toggleNoteExpanded, expandNote } from '../features/notes/noteSlice';
 import SearchBar from '../components/SearchBar';
 import NoteList from '../features/notes/components/NoteList';
 import Modal from '../components/Modal';

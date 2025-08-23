@@ -4,7 +4,7 @@ import { Plus, Eye, Edit2, X, Paperclip, Sparkles } from 'lucide-react';
 import Modal from '../../../components/Modal';
 import NoteForm from './NoteForm';
 import { useAppDispatch, useAppSelector } from '../../../app/hooks';
-import { createNote, aiGenerateChildren } from '../../../app/noteSlice';
+import { createNote, aiGenerateChildren } from '../noteSlice';
 
 interface MindMapProps {
   notes: Note[];
