@@ -8,12 +8,24 @@ export { default as AIGenerator } from './components/AIGenerator';
 
 // Export types
 export type { Note } from './types';
+export type { GenerateNoteResponse, GenerateChildrenResponse } from './NotesAPI';
 
 // Export hooks
-export { useFilteredNotes, useHomeNotes } from './hooks';
+export { useFilteredNotes } from './hooks/useFilteredNotes';
+export { useAIGeneratedNote } from './hooks/useAIGeneratedNote';
+export { useAIGeneratedChildren } from './hooks/useAIGeneratedChildren';
 
 // Export API
 export { NotesAPI } from './NotesAPI';
 
-// Export queries (future React Query implementation)
-export { useNotesQuery, useAddNote } from './queries';
+// Export React Query hooks
+export {
+  useGenerateNote,
+  useGenerateChildren,
+  useCreateNote,
+  useEditNote,
+  useDeleteNote,
+  useSearchNotes,
+  useNotes,
+  noteKeys
+} from './queries';
