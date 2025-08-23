@@ -1,5 +1,5 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
-import { Note } from '../types/Note';
+import { Note } from '../features/notes/Note';
 
 // Generate a simple UUID v4-like string
 function generateUUID(): string {

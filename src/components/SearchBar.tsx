@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Search, ChevronDown } from 'lucide-react';
-import { Note } from '../types/Note';
+import { Note } from '../features/notes/Note';
+import { Search, X, ChevronDown } from 'lucide-react';
 
 interface SearchBarProps {
   searchQuery: string;

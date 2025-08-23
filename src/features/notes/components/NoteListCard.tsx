@@ -1,6 +1,6 @@
-import React from 'react';
-import { Note } from '../types/Note';
-import { Trash2, Plus, X } from 'lucide-react';
+import React, { useState, useRef, useEffect } from 'react';
+import { Note } from '../Note';
+import { Edit3, Trash2, Save, X, Tag, Plus } from 'lucide-react';
 
 interface NoteListCardProps {
 	note: Note;

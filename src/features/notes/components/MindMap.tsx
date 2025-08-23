@@ -1,10 +1,10 @@
 import React, { useCallback, useMemo, useRef, useState, useEffect } from 'react';
-import { Note } from '../types/Note';
+import { Note } from '../Note';
 import { Plus, Eye, Edit2, X, Paperclip, Sparkles } from 'lucide-react';
-import Modal from './Modal';
+import Modal from '../../../components/Modal';
 import NoteForm from './NoteForm';
-import { useAppDispatch, useAppSelector } from '../store/hooks';
-import { createNote, aiGenerateChildren } from '../store/noteSlice';
+import { useAppDispatch, useAppSelector } from '../../../app/hooks';
+import { createNote, aiGenerateChildren } from '../../../app/noteSlice';
 
 interface MindMapProps {
   notes: Note[];

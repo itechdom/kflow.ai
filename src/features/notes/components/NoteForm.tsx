@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Note } from '../types/Note';
+import { Note } from '../Note';
 import { Save, Tag, Plus, X } from 'lucide-react';
 import AIGenerator from './AIGenerator';
 

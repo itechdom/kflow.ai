@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router';
-import { useAppSelector, useAppDispatch } from '../store/hooks';
-import { selectNote, deleteNote, addChildNote, createNote, setSearchQuery, editNote, toggleNoteExpanded, expandNote } from '../store/noteSlice';
-import NoteList from '../components/NoteList';
+import { useAppSelector, useAppDispatch } from '../app/hooks';
+import { selectNote, deleteNote, addChildNote, createNote, setSearchQuery, editNote, toggleNoteExpanded, expandNote } from '../app/noteSlice';
 import SearchBar from '../components/SearchBar';
+import NoteList from '../features/notes/components/NoteList';
 import Modal from '../components/Modal';
-import NoteForm from '../components/NoteForm';
-import { Note } from '../types/Note';
+import NoteForm from '../features/notes/components/NoteForm';
+import { Note } from '../features/notes/Note';
 
 const HomePage: React.FC = () => {
   const navigate = useNavigate();

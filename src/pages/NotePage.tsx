@@ -1,15 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router';
-import { useAppSelector, useAppDispatch } from '../store/hooks';
-import { selectNote, deleteNote, addChildNote, createNote, editNote, toggleNoteExpanded, expandNote } from '../store/noteSlice';
-import { Note } from '../types/Note';
-import NoteList from '../components/NoteList';
-import MindMap from '../components/MindMap';
-import SearchBar from '../components/SearchBar';
+import { useAppSelector, useAppDispatch } from '../app/hooks';
+import { selectNote, deleteNote, addChildNote, createNote, editNote, toggleNoteExpanded, expandNote } from '../app/noteSlice';
+import { Note } from '../features/notes/Note';
 import { ArrowLeft, List, Map } from 'lucide-react';
+import SearchBar from '../components/SearchBar';
+import NoteList from '../features/notes/components/NoteList';
+import MindMap from '../features/notes/components/MindMap';
 
 const NotePage: React.FC = () => {
-  const { noteId } = useParams<{ noteId: string }>();
+  const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
   const [viewMode, setViewMode] = useState<'list' | 'mindmap'>('list');
@@ -20,8 +20,8 @@ const NotePage: React.FC = () => {
   const { notes, selectedNote } = useAppSelector(state => state.notes);
 
   // Find the current note
-  const currentNote = notes.find(note => note.id === noteId);
-
+  const currentNote = notes.find(note => note.id === id);
+  
   // When searching in NotePage sidebar, if a unique match is found within the sidebar set,
   // ensure it is expanded (and its ancestors), scroll to it, and select it
   useEffect(() => {
