@@ -2,10 +2,10 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router';
 import { useAppSelector, useAppDispatch } from '../store/hooks';
 import { selectNote, deleteNote, addChildNote, createNote, setSearchQuery, editNote, toggleNoteExpanded, expandNote } from '../store/noteSlice';
-import NoteList from './NoteList';
-import SearchBar from './SearchBar';
-import Modal from './Modal';
-import NoteForm from './NoteForm';
+import NoteList from '../components/NoteList';
+import SearchBar from '../components/SearchBar';
+import Modal from '../components/Modal';
+import NoteForm from '../components/NoteForm';
 import { Note } from '../types/Note';
 
 const HomePage: React.FC = () => {

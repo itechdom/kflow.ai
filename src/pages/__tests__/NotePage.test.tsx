@@ -4,7 +4,7 @@ import { Provider } from 'react-redux';
 import { configureStore, combineReducers } from '@reduxjs/toolkit';
 import { MemoryRouter, Routes, Route } from 'react-router';
 import notesReducer from '../../store/noteSlice';
-import NotePage from '../NotePage';
+import NotePage from '../../pages/NotePage';
 
 function renderWithProvidersAndRouter(route: string, preloadedState: any) {
   const reducer = combineReducers({ notes: notesReducer });

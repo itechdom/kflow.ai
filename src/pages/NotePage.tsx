@@ -3,9 +3,9 @@ import { useParams, useNavigate } from 'react-router';
 import { useAppSelector, useAppDispatch } from '../store/hooks';
 import { selectNote, deleteNote, addChildNote, createNote, editNote, toggleNoteExpanded, expandNote } from '../store/noteSlice';
 import { Note } from '../types/Note';
-import NoteList from './NoteList';
-import MindMap from './MindMap';
-import SearchBar from './SearchBar';
+import NoteList from '../components/NoteList';
+import MindMap from '../components/MindMap';
+import SearchBar from '../components/SearchBar';
 import { ArrowLeft, List, Map } from 'lucide-react';
 
 const NotePage: React.FC = () => {
