@@ -138,7 +138,7 @@ const MindMap: React.FC<MindMapProps> = ({
 
   // Handle mouse down for panning
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
-    if(editingState){
+    if(editingState || showContentModal){
       return;
     }
     if (e.button === 0) { // Left mouse button
@@ -159,6 +159,9 @@ const MindMap: React.FC<MindMapProps> = ({
 
   // Handle mouse up for panning
   const handleMouseUp = useCallback(() => {
+    if(editingState || showContentModal){
+      return;
+    }
     setIsDragging(false);
   }, []);
 
