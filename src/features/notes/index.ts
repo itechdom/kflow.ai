@@ -10,7 +10,7 @@ export { default as AIGenerator } from './components/AIGenerator';
 export type { Note } from './Note';
 
 // Export hooks
-export { useFilteredNotes } from './hooks/useFilteredNotes';
+export { useFilteredNotes, useHomeNotes } from './hooks';
 
 // Export API
 export { NotesAPI } from './NotesAPI';

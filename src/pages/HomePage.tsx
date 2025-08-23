@@ -7,6 +7,7 @@ import NoteList from '../features/notes/components/NoteList';
 import Modal from '../components/Modal';
 import NoteForm from '../features/notes/components/NoteForm';
 import { Note } from '../features/notes/Note';
+import { useHomeNotes } from '../features/notes';
 
 const HomePage: React.FC = () => {
   const navigate = useNavigate();
@@ -15,10 +16,7 @@ const HomePage: React.FC = () => {
   // Get state from Redux
   const { notes, selectedNote, searchQuery } = useAppSelector(state => state.notes);
 
-  const filteredNotes = notes.filter(note =>{
-    return !note.parentId && (note.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    note.content.toLowerCase().includes(searchQuery.toLowerCase()));
-});
+  const filteredNotes = useHomeNotes(searchQuery);
 
   const handleNoteClick = (note: Note) => {
     // First select the note to ensure it's properly set in state
