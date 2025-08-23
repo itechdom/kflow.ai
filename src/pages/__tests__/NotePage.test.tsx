@@ -3,7 +3,7 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import { Provider } from 'react-redux';
 import { configureStore, combineReducers } from '@reduxjs/toolkit';
 import { MemoryRouter, Routes, Route } from 'react-router';
-import notesReducer from '../../store/noteSlice';
+import notesReducer from '../../features/notes/noteSlice';
 import NotePage from '../../pages/NotePage';
 
 function renderWithProvidersAndRouter(route: string, preloadedState: any) {

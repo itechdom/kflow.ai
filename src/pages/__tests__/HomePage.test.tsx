@@ -3,7 +3,7 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import { Provider } from 'react-redux';
 import { configureStore, combineReducers } from '@reduxjs/toolkit';
 import { BrowserRouter } from 'react-router';
-import notesReducer from '../../store/noteSlice';
+import notesReducer from '../../features/notes/noteSlice';
 import HomePage from '../../pages/HomePage';
 
 function renderWithProviders(ui: React.ReactElement, { preloadedState }: any = {}) {
