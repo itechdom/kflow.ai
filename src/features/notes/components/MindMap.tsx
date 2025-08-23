@@ -222,10 +222,6 @@ const MindMap: React.FC<MindMapProps> = ({
         }
       }
       if(e.key === 'Backspace') {
-        //check if editing is on, if so don't delete note
-        if(editingState) {
-          return;
-        }
         e.preventDefault();
         if (selectedNote && selectedNote.parentId !== undefined) {
           onDeleteNote(selectedNote.id);
