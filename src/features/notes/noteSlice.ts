@@ -32,7 +32,7 @@ const initialState: NoteState = {
       updatedAt: new Date(),
       tags: ['guide', 'tutorial'],
       parentId: undefined,
-      children: [],
+      children: ['2'],
       level: 0,
       isExpanded: false
     },
