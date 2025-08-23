@@ -7,17 +7,18 @@ export const useHomeNotes = (searchQuery: string = '') => {
 
   const filteredNotes = useMemo(() => {
     if (!searchQuery.trim()) {
-      return notes;
+      return notes.filter(note => !note.parentId);
     }
-
     const query = searchQuery.toLowerCase();
-    return notes.filter(note => 
-      !note.parentId && (   // Only show root notes
-      note.title.toLowerCase().includes(query) ||
+    const filteredNotes = notes.filter(note => {
+      return !note.parentId && (   // Only show root notes
+        note.title.toLowerCase().includes(query) ||
         note.content.toLowerCase().includes(query) ||
         note.tags.some(tag => tag.toLowerCase().includes(query))
       )
+    }
     );
+    return filteredNotes;
   }, [notes, searchQuery]);
 
   return filteredNotes;
