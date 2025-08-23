@@ -11,9 +11,7 @@ export type { Note } from './types';
 export type { GenerateNoteResponse, GenerateChildrenResponse } from './NotesAPI';
 
 // Export hooks
-export { useFilteredNotes } from './hooks/useFilteredNotes';
-export { useAIGeneratedNote } from './hooks/useAIGeneratedNote';
-export { useAIGeneratedChildren } from './hooks/useAIGeneratedChildren';
+export {useFilteredNotes, useHomeNotes, useAIGeneratedNote, useAIGeneratedChildren} from './hooks';
 
 // Export API
 export { NotesAPI } from './NotesAPI';

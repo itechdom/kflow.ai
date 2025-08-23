@@ -5,6 +5,7 @@ import Modal from '../../../components/Modal';
 import NoteForm from './NoteForm';
 import { useAppDispatch, useAppSelector } from '../../../app/hooks';
 import { createNote, aiGenerateChildren } from '../noteSlice';
+import { useGenerateChildren } from '../queries';
 
 interface MindMapProps {
   notes: Note[];
@@ -70,6 +71,9 @@ const MindMap: React.FC<MindMapProps> = ({
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number; note: Note } | null>(null);
   const [isTreeContainerFocused, setIsTreeContainerFocused] = useState(false);
   const dispatch = useAppDispatch();
+
+  // React Query hooks
+  const { mutateAsync: generateChildren, isPending: isGeneratingChildren } = useGenerateChildren();
 
   // Update container dimensions
   useEffect(() => {
@@ -844,24 +848,13 @@ const MindMap: React.FC<MindMapProps> = ({
   // Handle AI generation of children for a note
   const handleAIGenerateChildren = useCallback(async (parentNote: Note) => {
     try {
-      // Call OpenAI API to generate children
-      const response = await fetch('http://localhost:3001/api/generate-children', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ 
-          parentTitle: parentNote.title,
-          parentContent: parentNote.content || '',
-          parentTags: parentNote.tags || []
-        }),
+
+      // Use the React Query hook to generate children
+      const data = await generateChildren({
+        parentTitle: parentNote.title,
+        parentContent: parentNote.content || '',
+        parentTags: parentNote.tags || []
       });
-
-      if (!response.ok) {
-        throw new Error('Failed to generate children');
-      }
-
-      const data = await response.json();
       
       // Dispatch the aiGenerateChildren action with the generated children
       dispatch(aiGenerateChildren({
@@ -872,17 +865,10 @@ const MindMap: React.FC<MindMapProps> = ({
     } catch (error) {
       console.error('Error generating children:', error);
       
-      // Reset loading state
-      const resetNote = {
-        ...parentNote,
-        isGeneratingChildren: false
-      };
-      onEditNote(resetNote);
-      
       // Show error message (you could add a toast notification here)
       alert('Failed to generate children. Please try again.');
     }
-  }, [onEditNote, dispatch]);
+  }, [onEditNote, dispatch, generateChildren]);
 
   // Render tree node
   const renderNode = useCallback((node: TreeNode) => {
