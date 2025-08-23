@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useMemo, useEffect, useRef } from 'react';
-import { Note } from '../Note';
+import { Note } from '../types';
 import { Plus, Edit3, Trash2, Save, X, Tag } from 'lucide-react';
 import NoteListItem from './NoteListItem';
 import NoteListCard from './NoteListCard';

@@ -6,7 +6,7 @@ import SearchBar from '../components/SearchBar';
 import NoteList from '../features/notes/components/NoteList';
 import Modal from '../components/Modal';
 import NoteForm from '../features/notes/components/NoteForm';
-import { Note } from '../features/notes/Note';
+import { Note } from '../features/notes/types';
 import { useHomeNotes } from '../features/notes';
 
 const HomePage: React.FC = () => {

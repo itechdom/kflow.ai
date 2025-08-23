@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { Note } from '../Note';
+import { Note } from '../types';
 import { useAppSelector } from '../../../app/hooks';
 
 export const useFilteredNotes = (searchQuery: string = '') => {

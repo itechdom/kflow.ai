@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Note } from '../features/notes/Note';
+import { Note } from '../features/notes/types';
 import { Search, X, ChevronDown } from 'lucide-react';
 
 interface SearchBarProps {

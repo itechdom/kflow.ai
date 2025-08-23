@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Note } from '../Note';
+import { Note } from '../types';
 import { Edit3, Trash2, Save, X, Tag, Plus, ChevronRight, ChevronDown } from 'lucide-react';
 
 interface NoteListItemProps {

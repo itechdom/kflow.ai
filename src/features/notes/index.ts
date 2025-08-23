@@ -7,7 +7,7 @@ export { default as MindMap } from './components/MindMap';
 export { default as AIGenerator } from './components/AIGenerator';
 
 // Export types
-export type { Note } from './Note';
+export type { Note } from './types';
 
 // Export hooks
 export { useFilteredNotes, useHomeNotes } from './hooks';

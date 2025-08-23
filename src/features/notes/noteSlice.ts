@@ -1,5 +1,5 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
-import { Note } from './Note';
+import { Note } from './types';
 import { generateUUID } from '../../utils';
 
 interface NoteState {

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router';
 import { useAppSelector, useAppDispatch } from '../app/hooks';
 import { selectNote, deleteNote, addChildNote, createNote, editNote, toggleNoteExpanded, expandNote } from '../features/notes/noteSlice';
-import { Note } from '../features/notes/Note';
+import { Note } from '../features/notes/types';
 import { ArrowLeft, List, Map } from 'lucide-react';
 import SearchBar from '../components/SearchBar';
 import NoteList from '../features/notes/components/NoteList';

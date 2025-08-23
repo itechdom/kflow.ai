@@ -1,5 +1,5 @@
 import React, { useCallback, useMemo, useRef, useState, useEffect } from 'react';
-import { Note } from '../Note';
+import { Note } from '../types';
 import { Plus, Eye, Edit2, X, Paperclip, Sparkles } from 'lucide-react';
 import Modal from '../../../components/Modal';
 import NoteForm from './NoteForm';
