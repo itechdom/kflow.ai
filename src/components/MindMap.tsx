@@ -1072,7 +1072,7 @@ const MindMap: React.FC<MindMapProps> = ({
         
         {/* Expand/Collapse Indicator - Show if note has children */}
         {node.id !== 'virtual-root' && !isEditingTitle && note && note.children && note.children.length > 0 && (
-          <foreignObject x={transformedWidth - 30} y="20" width="20" height="20">
+          <foreignObject x={transformedWidth - 25} y="30" width="20" height="20">
             <div style={{ width: '100%', height: '100%' }}>
               <button
                 className={`expand-collapse-btn ${note.isExpanded ? 'expanded' : 'collapsed'}`}
@@ -1117,11 +1117,11 @@ const MindMap: React.FC<MindMapProps> = ({
         
         {/* Content Indicator - Show clip icon if node has actual content */}
         {node.id !== 'virtual-root' && note && note.content && note.content.trim() !== '' && note.content !== 'Add your content here...' && (
-          <foreignObject x={transformedWidth - 55} y={transformedHeight - 25} width="20" height="20">
+          <foreignObject x={transformedWidth-25} y={5} width="20" height="20">
             <div style={{ width: '100%', height: '100%' }}>
               <div
                 className="content-indicator"
-                title={`Has content: ${note.content.length > 50 ? note.content.substring(0, 50) + '...' : note.content}`}
+                title={`${note.content}`}
                 style={{
                   width: '100%',
                   height: '100%',
@@ -1137,19 +1137,6 @@ const MindMap: React.FC<MindMapProps> = ({
               </div>
             </div>
           </foreignObject>
-        )}
-        
-        {node.id !== 'virtual-root' && (
-          <text
-            x={transformedWidth - 10}
-            y={transformedHeight - 10}
-            textAnchor="end"
-            dominantBaseline="bottom"
-            className="node-level-badge"
-            style={{ fontSize: `${10 * zoom}px`, fill: '#9ca3af' }}
-          >
-            L{node.level}
-          </text>
         )}
       </g>
     );
@@ -1265,7 +1252,10 @@ const MindMap: React.FC<MindMapProps> = ({
       {/* Content Editing Modal */}
       <Modal
         isOpen={showContentModal}
-        onClose={() => setShowContentModal(false)}
+        onClose={() => {
+          setShowContentModal(false);
+          setIsTreeContainerFocused(true);
+        }}
         title="Edit Note Content"
         size="extra-large"
       >
