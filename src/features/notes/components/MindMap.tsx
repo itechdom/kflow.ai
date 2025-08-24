@@ -1154,7 +1154,7 @@ const MindMap: React.FC<MindMapProps> = ({
 
   return (
     <div 
-      className="mindmap-container" 
+      className="flex-1 flex flex-col overflow-hidden bg-gray-50" 
       ref={containerRef}
       onWheel={handleWheel}
       onMouseDown={handleMouseDown}
@@ -1163,43 +1163,52 @@ const MindMap: React.FC<MindMapProps> = ({
       onMouseLeave={handleMouseLeave}
       style={{ cursor: isDragging ? 'grabbing' : 'grab' }}
     >
-      <div className="mindmap-header">
-        <div className="controls">
-                  <div className="edit-hint">
-            <span className="hint-text">💡 Click on the tree area to enable keyboard shortcuts • Use ↑↓←→ arrow keys to navigate • Press F to expand/collapse notes • Double-click nodes to edit titles • Click blue edit button inside nodes for content • Orange +/- icon = expandable • Green clip icon = has content • Right-click for menu • Ctrl+E to edit content</span>
-          </div>
-          <div className="zoom-controls">
-            <button 
-              className="zoom-btn" 
-              onClick={() => setZoom(Math.max(0.3, zoom * 0.9))}
-              title="Zoom Out"
-            >
-              -
-            </button>
-            <span className="zoom-level">{Math.round(zoom * 100)}%</span>
-            <button 
-              className="zoom-btn" 
-              onClick={() => setZoom(Math.min(3, zoom * 1.1))}
-              title="Zoom In"
-            >
-              +
-            </button>
+      <div className="bg-white border-b border-gray-200 p-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <div className="flex items-center px-3 py-2 bg-blue-50 border border-blue-200 rounded-lg">
+              <span className="text-xs text-blue-700 font-medium">💡 Click on the tree area to enable keyboard shortcuts • Use ↑↓←→ arrow keys to navigate • Press F to expand/collapse notes • Double-click nodes to edit titles • Click blue edit button inside nodes for content • Orange +/- icon = expandable • Green clip icon = has content • Right-click for menu • Ctrl+E to edit content</span>
+            </div>
+            <div className="flex items-center gap-2 bg-gray-100 rounded-lg p-1">
+              <button 
+                className="w-8 h-8 flex items-center justify-center text-gray-600 hover:text-gray-800 hover:bg-white rounded transition-all duration-200 font-medium" 
+                onClick={() => setZoom(Math.max(0.3, zoom * 0.9))}
+                title="Zoom Out"
+              >
+                -
+              </button>
+              <span className="px-2 text-sm font-medium text-gray-700 min-w-[60px] text-center">{Math.round(zoom * 100)}%</span>
+              <button 
+                className="w-8 h-8 flex items-center justify-center text-gray-600 hover:text-gray-800 hover:bg-white rounded transition-all duration-200 font-medium" 
+                onClick={() => setZoom(Math.min(3, zoom * 1.1))}
+                title="Zoom In"
+              >
+                +
+              </button>
+            </div>
           </div>
         </div>
       </div>
 
       {notes.length === 0 ? (
-        <div className="empty-state">
-          <h3>No notes yet</h3>
-          <p>Create your first note to start building your knowledge tree</p>
-          <button className="create-first-note-btn" onClick={onCreateNote}>
-            <Plus size={16} />
-            Create your first note
-          </button>
+        <div className="flex-1 flex flex-col items-center justify-center p-12">
+          <div className="text-center space-y-4">
+            <h3 className="text-2xl font-bold text-gray-900">No notes yet</h3>
+            <p className="text-gray-600 max-w-md">Create your first note to start building your knowledge tree</p>
+            <button 
+              className="inline-flex items-center gap-2 px-6 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors duration-200 font-medium" 
+              onClick={onCreateNote}
+            >
+              <Plus size={16} />
+              Create your first note
+            </button>
+          </div>
         </div>
       ) : (
         <div 
-          className={`tree-container ${isTreeContainerFocused ? 'focused' : ''}`}
+          className={`flex-1 bg-gray-50 border border-gray-200 rounded-lg m-4 transition-all duration-200 ${
+            isTreeContainerFocused ? 'border-blue-500 ring-2 ring-blue-200' : ''
+          }`}
           tabIndex={0}
           onFocus={() => setIsTreeContainerFocused(true)}
           onBlur={() => setIsTreeContainerFocused(false)}
@@ -1214,20 +1223,24 @@ const MindMap: React.FC<MindMapProps> = ({
       {/* Context Menu */}
       {contextMenu && (
         <div 
-          className="context-menu"
+          className="fixed bg-white border border-gray-200 rounded-lg shadow-lg py-2 min-w-[160px] z-50"
           style={{
-            position: 'fixed',
-            left: Math.max(10, contextMenu.x - 75), // Center on x position, with margin from edge
-            top: Math.max(10, contextMenu.y - 30), // Position above cursor, with margin from edge
-            zIndex: 1001
+            left: Math.max(10, contextMenu.x - 75),
+            top: Math.max(10, contextMenu.y - 30),
           }}
           onClick={(e) => e.stopPropagation()}
         >
-          <div className="context-menu-item" onClick={() => openContentEditor(contextMenu.note)}>
+          <div 
+            className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 cursor-pointer transition-colors duration-150" 
+            onClick={() => openContentEditor(contextMenu.note)}
+          >
             <Edit2 size={14} />
             Edit Content
           </div>
-          <div className="context-menu-item" onClick={() => handleAddChildNote(contextMenu.note)}>
+          <div 
+            className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 cursor-pointer transition-colors duration-150" 
+            onClick={() => handleAddChildNote(contextMenu.note)}
+          >
             <Plus size={14} />
             Add Child
           </div>

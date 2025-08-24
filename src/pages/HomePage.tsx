@@ -99,19 +99,21 @@ const HomePage: React.FC = () => {
   };
 
   return (
-    <div className="App">
-      <header className="App-header">
-        <div className="flex justify-between items-center w-full">
-          <div>
-            <h1>KFlow</h1>
-            <p>Knowledge Management & AI-Powered Notes</p>
+    <div className="min-h-screen bg-gray-50">
+      <header className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-lg">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+          <div className="flex justify-between items-center">
+            <div>
+              <h1 className="text-4xl font-bold mb-2">KFlow</h1>
+              <p className="text-indigo-100 text-lg">Knowledge Management & AI-Powered Notes</p>
+            </div>
+            <UserProfile />
           </div>
-          <UserProfile />
         </div>
       </header>
 
-      <main className="App-main">
-        <div className="full-width-content">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
           <SearchBar
             searchQuery={searchQuery}
             onSearchChange={handleSearchChange}
@@ -120,20 +122,20 @@ const HomePage: React.FC = () => {
               handleNoteClick(note);
             }}
           />          
-            <NoteList 
-              notes={filteredNotes}
-              selectedNote={selectedNote}
-              onSelectNote={handleSelectNote}
-              onDeleteNote={handleDeleteNote}
-              onEditNote={handleEditNote}
-              onAddChildNote={handleAddChildNote}
-              onCreateNote={handleCreateNote}
-              onNavigateToNote={handleNoteClick}
-              showFullContent={false}
-              onToggleExpand={handleToggleExpand}
-              onEnsureExpanded={handleEnsureExpanded}
-              displayMode={'card'}
-            />
+          <NoteList 
+            notes={filteredNotes}
+            selectedNote={selectedNote}
+            onSelectNote={handleSelectNote}
+            onDeleteNote={handleDeleteNote}
+            onEditNote={handleEditNote}
+            onAddChildNote={handleAddChildNote}
+            onCreateNote={handleCreateNote}
+            onNavigateToNote={handleNoteClick}
+            showFullContent={false}
+            onToggleExpand={handleToggleExpand}
+            onEnsureExpanded={handleEnsureExpanded}
+            displayMode={'card'}
+          />
         </div>
       </main>
 

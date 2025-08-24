@@ -80,47 +80,53 @@ const NoteForm: React.FC<NoteFormProps> = ({
   };
 
   return (
-    <div className="note-form-container">
+    <div className="space-y-6">
       {/* AI Generator Section */}
-      <div className="ai-generator-section">
+      <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg p-4">
         <AIGenerator onFillForm={handleAIFillForm} />
       </div>
 
       {/* Form Section */}
-      <form onSubmit={handleSubmit} className="note-form">
-        <div className="form-group">
-          <label htmlFor="note-title">Title:</label>
+      <form onSubmit={handleSubmit} className="space-y-6">
+        <div className="space-y-2">
+          <label htmlFor="note-title" className="block text-sm font-medium text-gray-700">
+            Title:
+          </label>
           <input
             id="note-title"
             type="text"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            className="form-input"
+            className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors duration-200"
             placeholder="Enter note title..."
             required
             autoFocus
           />
         </div>
 
-        <div className="form-group">
-          <label htmlFor="note-content">Content:</label>
+        <div className="space-y-2">
+          <label htmlFor="note-content" className="block text-sm font-medium text-gray-700">
+            Content:
+          </label>
           <textarea
             id="note-content"
             value={content}
             onChange={(e) => setContent(e.target.value)}
             onScroll={e => e.stopPropagation()}
-            className="form-textarea"
+            className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors duration-200 resize-vertical min-h-[200px]"
             rows={8}
             placeholder="Enter note content..."
           />
         </div>
 
-        <div className="form-group">
-          <label htmlFor="note-tags">Tags:</label>
-          <div className="tags-input-container">
+        <div className="space-y-2">
+          <label htmlFor="note-tags" className="block text-sm font-medium text-gray-700">
+            Tags:
+          </label>
+          <div className="flex gap-2">
             <input
               type="text"
-              className="tag-input"
+              className="flex-1 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors duration-200"
               value={newTag}
               onChange={(e) => setNewTag(e.target.value)}
               onKeyPress={handleKeyPress}
@@ -128,39 +134,39 @@ const NoteForm: React.FC<NoteFormProps> = ({
             />
             <button
               type="button"
-              className="add-tag-btn"
+              className="px-3 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors duration-200 flex items-center justify-center"
               onClick={handleAddTag}
             >
-              <Plus size={12} />
+              <Plus size={16} />
             </button>
           </div>
-          <div className="tags-display">
+          <div className="flex flex-wrap gap-2 mt-2">
             {tags.map(tag => (
-              <span key={tag} className="tag">
+              <span key={tag} className="inline-flex items-center gap-1 px-3 py-1 bg-indigo-100 text-indigo-800 rounded-full text-sm font-medium">
                 #{tag}
                 <button
                   type="button"
-                  className="remove-tag-btn"
+                  className="text-indigo-600 hover:text-indigo-800 transition-colors duration-200 p-0.5 rounded-full hover:bg-indigo-200"
                   onClick={() => handleRemoveTag(tag)}
                 >
-                  <X size={10} />
+                  <X size={12} />
                 </button>
               </span>
             ))}
           </div>
         </div>
 
-        <div className="modal-footer">
+        <div className="flex justify-end gap-3 pt-4 border-t border-gray-200">
           <button
             type="button"
-            className="btn btn-secondary"
+            className="px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-colors duration-200"
             onClick={onCancel}
           >
             Cancel
           </button>
           <button
             type="submit"
-            className="btn btn-primary"
+            className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors duration-200"
           >
             {isCreating ? 'Create Note' : 'Save Changes'}
           </button>
