@@ -6,6 +6,7 @@ import SearchBar from '../components/SearchBar';
 import NoteList from '../features/notes/components/NoteList';
 import Modal from '../components/Modal';
 import NoteForm from '../features/notes/components/NoteForm';
+import { UserProfile } from '../features/auth';
 import { Note } from '../features/notes/types';
 import { useHomeNotes } from '../features/notes';
 
@@ -100,8 +101,13 @@ const HomePage: React.FC = () => {
   return (
     <div className="App">
       <header className="App-header">
-        <h1>KFlow</h1>
-        <p>Knowledge Management & AI-Powered Notes</p>
+        <div className="flex justify-between items-center w-full">
+          <div>
+            <h1>KFlow</h1>
+            <p>Knowledge Management & AI-Powered Notes</p>
+          </div>
+          <UserProfile />
+        </div>
       </header>
 
       <main className="App-main">

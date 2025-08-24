@@ -17,10 +17,13 @@
     "cors": "^2.8.5",
     "dotenv": "^17.2.1",
     "express": "^5.1.0",
+    "firebase": "^12.1.0",
+    "firebase-admin": "^13.4.0",
     "lucide-react": "^0.539.0",
     "openai": "^5.12.2",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
+    "react-firebase-hooks": "^5.1.1",
     "react-force-graph-2d": "^1.28.0",
     "react-redux": "^9.2.0",
     "react-router": "^7.8.0",
@@ -34,10 +37,7 @@
     "start": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",
-    "eject": "react-scripts eject",
-    "server": "node server.js",
-    "server:dev": "nodemon server.js",
-    "dev": "concurrently \"npm run server:dev\" \"npm run start\""
+    "eject": "react-scripts eject"
   },
   "eslintConfig": {
     "extends": [
