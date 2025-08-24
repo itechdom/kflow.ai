@@ -23,6 +23,7 @@ interface AuthProviderProps {
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [user, setUserState] = useState<User | null>(null);
   const [loading, setLoadingState] = useState(true);
+  const [onAuthSuccess, setOnAuthSuccess] = useState<(() => void) | undefined>(undefined);
   const dispatch = useDispatch();
 
   useEffect(() => {
@@ -30,10 +31,15 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       setUserState(user);
       setLoadingState(false);
       dispatch(setUser(user));
+      
+      // Call the auth success callback if it exists
+      if (user && onAuthSuccess) {
+        onAuthSuccess();
+      }
     });
 
     return () => unsubscribe();
-  }, [dispatch]);
+  }, [dispatch, onAuthSuccess]);
 
   const signInWithGoogle = async () => {
     try {
@@ -82,6 +88,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     signOut,
     signInWithEmail,
     signUpWithEmail,
+    onAuthSuccess,
+    setOnAuthSuccess,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

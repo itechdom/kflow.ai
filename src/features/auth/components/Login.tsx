@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuthContext } from '../AuthContext';
 import { useSelector } from 'react-redux';
+import { useNavigate } from 'react-router-dom';
 import { RootState } from '../../../app/store';
 
 const Login: React.FC = () => {
@@ -9,8 +10,14 @@ const Login: React.FC = () => {
   const [isSignUp, setIsSignUp] = useState(false);
   const [displayName, setDisplayName] = useState('');
   
-  const { signInWithGoogle, signInWithEmail, signUpWithEmail } = useAuthContext();
+  const { signInWithGoogle, signInWithEmail, signUpWithEmail, setOnAuthSuccess } = useAuthContext();
   const { loading, error } = useSelector((state: RootState) => state.auth);
+  const navigate = useNavigate();
+  
+  // Set up navigation callback when component mounts
+  useEffect(() => {
+    setOnAuthSuccess(() => () => navigate('/', { replace: true }));
+  }, [setOnAuthSuccess, navigate]);
 
   const handleGoogleSignIn = async () => {
     try {

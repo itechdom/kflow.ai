@@ -22,4 +22,6 @@ export interface AuthContextType {
   signOut: () => Promise<void>;
   signInWithEmail: (email: string, password: string) => Promise<void>;
   signUpWithEmail: (email: string, password: string, displayName?: string) => Promise<void>;
+  onAuthSuccess?: () => void;
+  setOnAuthSuccess: (callback: () => void) => void;
 }
