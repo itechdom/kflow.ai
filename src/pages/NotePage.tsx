@@ -7,6 +7,7 @@ import { ArrowLeft, List, Map } from 'lucide-react';
 import SearchBar from '../components/SearchBar';
 import NoteList from '../features/notes/components/NoteList';
 import MindMap from '../features/notes/components/MindMap';
+import { UserProfile } from '../features/auth';
 
 const NotePage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -225,6 +226,8 @@ const NotePage: React.FC = () => {
             Mind Map
           </button>
         </div>
+        
+        <UserProfile />
       </div>
 
       <div className="note-page-content">
