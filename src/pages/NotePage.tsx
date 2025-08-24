@@ -186,52 +186,68 @@ const NotePage: React.FC = () => {
   };
 
   return (
-    <div className="note-page">
-      <div className="note-page-header">
-        <button 
-          className="back-btn"
-          onClick={() => navigate('/')}
-        >
-          <ArrowLeft size={20} />
-          Back to All Notes
-        </button>
-        
-        <div className="note-page-title">
-          <h1 className="note-title">
-            {currentNote.title}
-          </h1>
-          <div className="note-meta">
-            <span className="note-level-badge">Level {currentNote.level}</span>
-            {currentNote.parentId && (
-              <span className="parent-note-info">
-                Parent: {notes.find(n => n.id === currentNote.parentId)?.title || 'Unknown'}
-              </span>
-            )}
+    <div className="min-h-screen bg-gray-50">
+      <div className="bg-white border-b border-gray-200 shadow-sm">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+          <div className="flex items-center justify-between gap-4">
+            <button 
+              className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors duration-200"
+              onClick={() => navigate('/')}
+            >
+              <ArrowLeft size={20} className="mr-2" />
+              Back to All Notes
+            </button>
+            
+            <div className="flex-1 text-center">
+              <h1 className="text-3xl font-bold text-gray-900 mb-2">
+                {currentNote.title}
+              </h1>
+              <div className="flex items-center justify-center gap-3">
+                <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-indigo-100 text-indigo-800">
+                  Level {currentNote.level}
+                </span>
+                {currentNote.parentId && (
+                  <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-yellow-100 text-yellow-800">
+                    Parent: {notes.find(n => n.id === currentNote.parentId)?.title || 'Unknown'}
+                  </span>
+                )}
+              </div>
+            </div>
+
+            <div className="flex items-center gap-4">
+              <div className="flex bg-gray-100 rounded-lg p-1">
+                <button
+                  className={`inline-flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors duration-200 ${
+                    viewMode === 'list' 
+                      ? 'bg-white text-gray-900 shadow-sm' 
+                      : 'text-gray-500 hover:text-gray-700'
+                  }`}
+                  onClick={() => setViewMode('list')}
+                >
+                  <List size={16} className="mr-2" />
+                  List View
+                </button>
+                <button
+                  className={`inline-flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors duration-200 ${
+                    viewMode === 'mindmap' 
+                      ? 'bg-white text-gray-900 shadow-sm' 
+                      : 'text-gray-500 hover:text-gray-700'
+                  }`}
+                  onClick={() => setViewMode('mindmap')}
+                >
+                  <Map size={16} className="mr-2" />
+                  Mind Map
+                </button>
+              </div>
+              
+              <UserProfile />
+            </div>
           </div>
         </div>
-
-        <div className="view-toggle">
-          <button
-            className={`toggle-btn ${viewMode === 'list' ? 'active' : ''}`}
-            onClick={() => setViewMode('list')}
-          >
-            <List size={16} />
-            List View
-          </button>
-          <button
-            className={`toggle-btn ${viewMode === 'mindmap' ? 'active' : ''}`}
-            onClick={() => setViewMode('mindmap')}
-          >
-            <Map size={16} />
-            Mind Map
-          </button>
-        </div>
-        
-        <UserProfile />
       </div>
 
-      <div className="note-page-content">
-        <div className="sidebar">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
           <SearchBar 
             searchQuery={searchQuery} 
             onSearchChange={setSearchQuery}

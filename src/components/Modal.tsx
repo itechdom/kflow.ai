@@ -19,28 +19,28 @@ const Modal: React.FC<ModalProps> = ({
   if (!isOpen) return null;
 
   const sizeClasses = {
-    small: 'modal-content-small',
-    medium: 'modal-content-medium',
-    large: 'modal-content-large',
-    'extra-large': 'modal-content-extra-large'
+    small: 'w-96',
+    medium: 'w-[600px]',
+    large: 'w-[800px]',
+    'extra-large': 'w-[900px] max-h-[90vh]'
   };
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4" onClick={onClose}>
       <div 
-        className={`modal-content ${sizeClasses[size]}`} 
+        className={`bg-white rounded-xl shadow-2xl max-h-[90vh] overflow-hidden ${sizeClasses[size]}`}
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="modal-header">
-          <h3>{title}</h3>
+        <div className="flex justify-between items-center p-6 border-b border-gray-200">
+          <h3 className="text-xl font-semibold text-gray-900">{title}</h3>
           <button 
-            className="close-btn"
+            className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors duration-200"
             onClick={onClose}
           >
             <X size={20} />
           </button>
         </div>
-        <div className="modal-body">
+        <div className="p-6 max-h-[calc(90vh-120px)] overflow-y-auto">
           {children}
         </div>
       </div>

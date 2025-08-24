@@ -81,7 +81,15 @@ const NoteListCard: React.FC<NoteListCardProps> = ({
 
 	return (
 		<div
-			className={`note-item note-card ${selectedNote?.id === note.id ? 'selected' : ''} ${isNewChildNote ? 'new-child-note' : ''}`}
+			className={`p-4 border border-gray-200 rounded-lg mb-3 transition-all duration-200 ${
+				selectedNote?.id === note.id 
+					? 'border-indigo-500 bg-indigo-50 shadow-md' 
+					: 'hover:border-gray-300 hover:shadow-sm'
+			} ${
+				isNewChildNote 
+					? 'border-orange-300 bg-orange-50 animate-pulse' 
+					: ''
+			}`}
 			ref={(el) => { noteRefs.current[note.id] = el; }}
 			onClick={(e) => {
 				e.stopPropagation();
@@ -93,13 +101,17 @@ const NoteListCard: React.FC<NoteListCardProps> = ({
 				cursor: !note.parentId ? 'pointer' : 'default'
 			}}
 		>
-			<div className="note-card-header">
+			<div className="flex justify-between items-start mb-3">
 				{isEditingTitle ? (
-					<div className="inline-edit-container" onClick={(e) => e.stopPropagation()}>
+					<div className="flex-1 mr-3" onClick={(e) => e.stopPropagation()}>
 						<input
 							ref={(el) => { titleInputRefs.current[note.id] = el; }}
 							type="text"
-							className={`inline-edit-input title-input ${isNewChildNote ? 'new-child-note-input' : ''}`}
+							className={`w-full px-3 py-2 border-2 border-blue-500 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-200 transition-all duration-200 ${
+								isNewChildNote 
+									? 'bg-orange-50 border-orange-500' 
+									: 'bg-white'
+							}`}
 							value={editValues.title}
 							onChange={(e) => {
 								const newTitle = e.target.value;
@@ -123,19 +135,21 @@ const NoteListCard: React.FC<NoteListCardProps> = ({
 					</div>
 				) : (
 					<h4 
-						className="note-title clickable"
+						className="flex-1 text-lg font-semibold text-gray-900 hover:text-blue-600 hover:bg-blue-50 px-2 py-1 rounded cursor-pointer transition-all duration-200 mr-3"
 						onClick={(e) => { e.stopPropagation(); startEditing(note, 'title'); }}
 						title="Click to edit title"
 					>
 						{note.title}
 					</h4>
 				)}
-				<span className="note-level">L{note.level}</span>
+				<span className="px-2 py-1 bg-gray-100 text-gray-600 text-xs font-medium rounded-full flex-shrink-0">
+					L{note.level}
+				</span>
 			</div>
-			<div className="note-card-content">
+			<div className="mb-3">
 				{isEditingContent ? (
 					<textarea
-						className="inline-edit-textarea content-textarea"
+						className="w-full px-3 py-2 border-2 border-blue-500 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-200 transition-all duration-200 resize-none min-h-[100px]"
 						value={editValues.content}
 						onChange={(e) => {
 							const newContent = e.target.value;
@@ -154,7 +168,7 @@ const NoteListCard: React.FC<NoteListCardProps> = ({
 					/>
 				) : (
 					<p 
-						className="note-preview clickable"
+						className="text-gray-700 hover:text-blue-600 hover:bg-blue-50 px-2 py-1 rounded cursor-pointer transition-all duration-200 min-h-[24px]"
 						onClick={(e) => { e.stopPropagation(); startEditing(note, 'content'); }}
 						title="Click to edit content"
 					>
@@ -165,11 +179,11 @@ const NoteListCard: React.FC<NoteListCardProps> = ({
 					</p>
 				)}
 			</div>
-			<div className="note-card-meta">
-				<span className="note-date">{formatDate(note.updatedAt)}</span>
+			<div className="flex justify-between items-center mb-3">
+				<span className="text-sm text-gray-500">{formatDate(note.updatedAt)}</span>
 				{isEditingTags ? (
 					<div
-						className="inline-edit-container tags-edit"
+						className="flex-1 ml-4"
 						ref={tagsContainerRef}
 						onClick={(e) => e.stopPropagation()}
 						onBlur={(e) => {
@@ -179,10 +193,10 @@ const NoteListCard: React.FC<NoteListCardProps> = ({
 							}
 						}}
 					>
-						<div className="tags-input-container">
+						<div className="flex gap-2 mb-2">
 							<input
 								type="text"
-								className="tag-input"
+								className="flex-1 px-2 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-500"
 								value={newTag}
 								onChange={(e) => {
 									setNewTag(e.target.value);
@@ -195,19 +209,19 @@ const NoteListCard: React.FC<NoteListCardProps> = ({
 								placeholder="Add a tag..."
 							/>
 							<button
-								className="add-tag-btn"
+								className="px-2 py-1 bg-blue-600 text-white rounded text-sm hover:bg-blue-700 transition-colors duration-200 flex items-center justify-center"
 								onMouseDown={(e) => e.preventDefault()}
 								onClick={() => handleAddTag(note)}
 							>
 								<Plus size={12} />
 							</button>
 						</div>
-						<div className="tags-display">
+						<div className="flex flex-wrap gap-1">
 							{editValues.tags.map(tag => (
-								<span key={tag} className="tag">
+								<span key={tag} className="inline-flex items-center gap-1 px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-medium">
 									#{tag}
 									<button
-										className="remove-tag-btn"
+										className="text-blue-600 hover:text-blue-800 hover:bg-blue-200 rounded-full p-0.5 transition-colors duration-200"
 										onMouseDown={(e) => e.preventDefault()}
 										onClick={() => handleRemoveTag(note, tag)}
 									>
@@ -219,26 +233,26 @@ const NoteListCard: React.FC<NoteListCardProps> = ({
 					</div>
 				) : (
 					<div 
-						className="note-tags clickable"
+						className="flex items-center gap-2 cursor-pointer hover:bg-blue-50 px-2 py-1 rounded transition-colors duration-200"
 						onClick={(e) => { e.stopPropagation(); startEditing(note, 'tags'); }}
 						title="Click to edit tags"
 					>
 						{note.tags.length > 0 ? (
 							<>
 								{note.tags.slice(0, 3).map(tag => (
-									<span key={tag} className="tag">#{tag}</span>
+									<span key={tag} className="px-2 py-1 bg-gray-100 text-gray-700 rounded-full text-xs font-medium">#{tag}</span>
 								))}
-								{note.tags.length > 3 && <span className="more-tags">+{note.tags.length - 3}</span>}
+								{note.tags.length > 3 && <span className="text-xs text-gray-500">+{note.tags.length - 3}</span>}
 							</>
 						) : (
-							<span className="no-tags">Click to add tags</span>
+							<span className="text-xs text-gray-400 italic">Click to add tags</span>
 						)}
 					</div>
 				)}
 			</div>
-			<div className="note-card-actions">
+			<div className="flex justify-end">
 				<button
-					className="action-btn delete-btn"
+					className="p-2 text-red-600 hover:text-red-700 hover:bg-red-50 rounded transition-colors duration-200"
 					onClick={(e) => {
 						e.stopPropagation();
 						handleNoteDelete(note.id);
@@ -249,7 +263,7 @@ const NoteListCard: React.FC<NoteListCardProps> = ({
 				</button>
 			</div>
 			{hasChildren && isExpanded && (
-				<div className="child-notes">
+				<div className="mt-4 border-l-2 border-gray-200 pl-4">
 					{childNotes.map(childNote => renderNoteItem(childNote))}
 				</div>
 			)}
