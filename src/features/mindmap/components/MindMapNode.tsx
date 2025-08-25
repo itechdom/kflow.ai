@@ -77,7 +77,7 @@ const MindMapNode: React.FC<MindMapNodeProps> = ({
       onDoubleClick={(e) => {
         e.stopPropagation();
         if (note && node.id !== 'virtual-root') {
-          onStartEditing(note, 'title');
+          onOpenContentEditor(note);
         }
       }}
       onContextMenu={(e) => onNodeRightClick(e, node)}

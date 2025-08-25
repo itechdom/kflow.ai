@@ -83,6 +83,7 @@ const MindMap: React.FC<MindMapProps> = ({
     const {
         findParentNote,
         findFirstChildNote,
+        findMiddleChildNote,
         findPreviousSiblingNote,
         findNextSiblingNote
     } = useMindMapNavigation({ notes, selectedNote, laidOutNodes, onSelectNote });
@@ -123,6 +124,7 @@ const MindMap: React.FC<MindMapProps> = ({
         handleAddChildNote,
         findParentNote,
         findFirstChildNote,
+        findMiddleChildNote,
         findPreviousSiblingNote,
         findNextSiblingNote,
         laidOutNodes,

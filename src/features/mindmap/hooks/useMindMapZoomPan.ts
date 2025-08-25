@@ -30,7 +30,7 @@ export const useMindMapZoomPan = ({
   showContentModal 
 }: UseMindMapZoomPanProps): UseMindMapZoomPanReturn => {
   const [zoom, setZoom] = useState(1);
-  const [pan, setPan] = useState({ x: 0, y: 0 });
+  const [pan, setPan] = useState({ x: 0, y: 200 });
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
   const [containerWidth, setContainerWidth] = useState(800);

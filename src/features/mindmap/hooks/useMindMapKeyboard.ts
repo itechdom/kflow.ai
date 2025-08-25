@@ -14,6 +14,7 @@ interface UseMindMapKeyboardProps {
   handleAddChildNote: (note: Note) => void;
   findParentNote: (note: Note) => Note | null;
   findFirstChildNote: (note: Note) => Note | null;
+  findMiddleChildNote: (note: Note) => Note | null;
   findPreviousSiblingNote: (note: Note) => Note | null;
   findNextSiblingNote: (note: Note) => Note | null;
   laidOutNodes: TreeNode[];
@@ -39,6 +40,7 @@ export const useMindMapKeyboard = ({
   handleAddChildNote,
   findParentNote,
   findFirstChildNote,
+  findMiddleChildNote,
   findPreviousSiblingNote,
   findNextSiblingNote,
   laidOutNodes,
@@ -66,8 +68,8 @@ export const useMindMapKeyboard = ({
             nextNote = findParentNote(selectedNote);
             break;
           case 'ArrowRight':
-            // Navigate to first child
-            nextNote = findFirstChildNote(selectedNote);
+            // Navigate to middle child for more intuitive navigation
+            nextNote = findMiddleChildNote(selectedNote);
             break;
           case 'ArrowUp':
             // Navigate to previous sibling
@@ -130,6 +132,7 @@ export const useMindMapKeyboard = ({
     layoutType,
     findParentNote, 
     findFirstChildNote, 
+    findMiddleChildNote,
     findPreviousSiblingNote, 
     findNextSiblingNote, 
     onSelectNote, 

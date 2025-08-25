@@ -338,3 +338,25 @@ export const findNextSiblingNote = (note: Note, notes: Note[], laidOutNodes: Tre
   if (currentIndex === -1 || currentIndex >= sortedSiblings.length - 1) return null;
   return sortedSiblings[currentIndex + 1];
 };
+
+export const findMiddleChildNote = (note: Note, notes: Note[], laidOutNodes: TreeNode[]): Note | null => {
+  const children = notes.filter(n => n.parentId === note.id);
+  if (children.length === 0) return null;
+  
+  // Sort children by their position in the tree
+  const sortedChildren = children.sort((a, b) => {
+    const aNode = laidOutNodes.find(n => n.id === a.id);
+    const bNode = laidOutNodes.find(n => n.id === b.id);
+    if (!aNode || !bNode) return 0;
+    
+    // For vertical layout, sort by Y position (top to bottom)
+    // For horizontal layout, sort by X position (left to right)
+    const aPos = aNode.y;
+    const bPos = bNode.y;
+    return aPos - bPos;
+  });
+  
+  // Return the middle child (or the first child if there's only one)
+  const middleIndex = Math.floor(sortedChildren.length / 2);
+  return sortedChildren[middleIndex];
+};
