@@ -6,6 +6,7 @@ interface UseMindMapKeyboardProps {
   isTreeContainerFocused: boolean;
   editingState: EditingState | null;
   selectedNote: Note | null;
+  layoutType: 'horizontal' | 'vertical';
   onSelectNote: (note: Note) => void;
   onEditNote: (note: Note) => void;
   onDeleteNote: (noteId: string) => void;
@@ -30,6 +31,7 @@ export const useMindMapKeyboard = ({
   isTreeContainerFocused,
   editingState,
   selectedNote,
+  layoutType,
   onSelectNote,
   onEditNote,
   onDeleteNote,
@@ -56,23 +58,46 @@ export const useMindMapKeyboard = ({
       
       let nextNote: Note | null = null;
       
-      switch (e.key) {
-        case 'ArrowUp':
-          // Navigate to parent
-          nextNote = findParentNote(selectedNote);
-          break;
-        case 'ArrowDown':
-          // Navigate to first child
-          nextNote = findFirstChildNote(selectedNote);
-          break;
-        case 'ArrowLeft':
-          // Navigate to previous sibling
-          nextNote = findPreviousSiblingNote(selectedNote);
-          break;
-        case 'ArrowRight':
-          // Navigate to next sibling
-          nextNote = findNextSiblingNote(selectedNote);
-          break;
+      if (layoutType === 'vertical') {
+        // Vertical layout: left/right for parent/child, up/down for siblings
+        switch (e.key) {
+          case 'ArrowLeft':
+            // Navigate to parent
+            nextNote = findParentNote(selectedNote);
+            break;
+          case 'ArrowRight':
+            // Navigate to first child
+            nextNote = findFirstChildNote(selectedNote);
+            break;
+          case 'ArrowUp':
+            // Navigate to previous sibling
+            nextNote = findPreviousSiblingNote(selectedNote);
+            break;
+          case 'ArrowDown':
+            // Navigate to next sibling
+            nextNote = findNextSiblingNote(selectedNote);
+            break;
+        }
+      } else {
+        // Horizontal layout: up/down for parent/child, left/right for siblings
+        switch (e.key) {
+          case 'ArrowUp':
+            // Navigate to parent
+            nextNote = findParentNote(selectedNote);
+            break;
+          case 'ArrowDown':
+            // Navigate to first child
+            nextNote = findFirstChildNote(selectedNote);
+            break;
+          case 'ArrowLeft':
+            // Navigate to previous sibling
+            nextNote = findPreviousSiblingNote(selectedNote);
+            break;
+          case 'ArrowRight':
+            // Navigate to next sibling
+            nextNote = findNextSiblingNote(selectedNote);
+            break;
+        }
       }
       
       if (nextNote) {
@@ -102,6 +127,7 @@ export const useMindMapKeyboard = ({
   }, [
     isTreeContainerFocused, 
     selectedNote, 
+    layoutType,
     findParentNote, 
     findFirstChildNote, 
     findPreviousSiblingNote, 

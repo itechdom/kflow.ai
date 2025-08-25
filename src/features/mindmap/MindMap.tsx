@@ -32,6 +32,7 @@ const MindMap: React.FC<MindMapProps> = ({
     const containerRef = useRef<HTMLDivElement>(null);
     const [isTreeContainerFocused, setIsTreeContainerFocused] = useState(false);
     const [autoEditNoteId, setAutoEditNoteId] = useState<string | null>(null);
+    const [layoutType, setLayoutType] = useState<'horizontal' | 'vertical'>('vertical');
 
     const {
         editingState,
@@ -66,7 +67,7 @@ const MindMap: React.FC<MindMapProps> = ({
         treeData,
         laidOutNodes,
         laidOutConnections
-    } = useMindMapLayout({ notes, containerWidth });
+    } = useMindMapLayout({ notes, containerWidth, layoutType });
 
     const {
         contextMenu,
@@ -105,11 +106,16 @@ const MindMap: React.FC<MindMapProps> = ({
         setAutoEditNoteId(note.id);
     }, [onAddChildNote, closeContextMenu]);
 
+    const toggleLayout = useCallback(() => {
+        setLayoutType(prev => prev === 'horizontal' ? 'vertical' : 'horizontal');
+    }, []);
+
     // Keyboard shortcuts
     useMindMapKeyboard({
         isTreeContainerFocused,
         editingState,
         selectedNote,
+        layoutType,
         onSelectNote,
         onEditNote,
         onDeleteNote,
@@ -196,8 +202,10 @@ const MindMap: React.FC<MindMapProps> = ({
         >
             <MindMapHeader
                 zoom={zoom}
+                layoutType={layoutType}
                 onZoomIn={() => setZoom(Math.min(3, zoom * 1.1))}
                 onZoomOut={() => setZoom(Math.max(0.3, zoom * 0.9))}
+                onToggleLayout={toggleLayout}
             />
 
             {notes.length === 0 ? (

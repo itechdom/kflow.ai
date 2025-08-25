@@ -15,3 +15,10 @@ export const MINDMAP_CONSTANTS = {
   COLLISION_BUFFER: 50,
   COLLISION_SEPARATION: 100,
 } as const;
+
+export const LAYOUT_TYPES = {
+  HORIZONTAL: 'horizontal',
+  VERTICAL: 'vertical',
+} as const;
+
+export type LayoutType = typeof LAYOUT_TYPES[keyof typeof LAYOUT_TYPES];

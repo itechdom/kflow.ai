@@ -13,6 +13,7 @@ import {
 interface UseMindMapLayoutProps {
   notes: Note[];
   containerWidth: number;
+  layoutType?: 'horizontal' | 'vertical';
 }
 
 interface UseMindMapLayoutReturn {
@@ -24,7 +25,7 @@ interface UseMindMapLayoutReturn {
   wrapText: (text: string, maxWidth: number) => string[];
 }
 
-export const useMindMapLayout = ({ notes, containerWidth }: UseMindMapLayoutProps): UseMindMapLayoutReturn => {
+export const useMindMapLayout = ({ notes, containerWidth, layoutType = 'horizontal' }: UseMindMapLayoutProps): UseMindMapLayoutReturn => {
   // Prepare tree data from notes
   const treeData = useMemo(() => {
     const nodesMap = new Map<string, TreeNode>();
@@ -81,7 +82,7 @@ export const useMindMapLayout = ({ notes, containerWidth }: UseMindMapLayoutProp
     if (!treeData) return { nodes: [], connections: [] };
 
     // Phase 1: Calculate initial layout and get total widths
-    const { nodes, connections, totalWidth } = layoutTree(treeData, 0, 0, 0, 0, 1);
+    const { nodes, connections, totalWidth } = layoutTree(treeData, 0, 0, 0, 0, 1, layoutType);
     
     // Phase 2: Detect and resolve overlapping between different parent groups
     const resolvedNodes = [...nodes];
@@ -162,7 +163,7 @@ export const useMindMapLayout = ({ notes, containerWidth }: UseMindMapLayoutProp
     });
 
     return { nodes: resolvedNodes, connections: resolvedConnections };
-  }, [treeData, containerWidth]);
+  }, [treeData, containerWidth, layoutType]);
 
   return {
     treeData,

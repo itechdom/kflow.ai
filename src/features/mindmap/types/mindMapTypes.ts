@@ -21,6 +21,7 @@ export interface LayoutResult {
   nodes: TreeNode[];
   connections: { source: TreeNode; target: TreeNode }[];
   totalWidth: number;
+  totalHeight?: number;
 }
 
 export interface Bounds {
@@ -75,8 +76,10 @@ export interface MindMapContextMenuProps {
 
 export interface MindMapHeaderProps {
   zoom: number;
+  layoutType: 'horizontal' | 'vertical';
   onZoomIn: () => void;
   onZoomOut: () => void;
+  onToggleLayout: () => void;
 }
 
 export interface MindMapCanvasProps {

@@ -3,8 +3,10 @@ import { MindMapHeaderProps } from '../types/mindMapTypes';
 
 const MindMapHeader: React.FC<MindMapHeaderProps> = ({
   zoom,
+  layoutType,
   onZoomIn,
-  onZoomOut
+  onZoomOut,
+  onToggleLayout
 }) => {
   return (
     <div className="bg-white border-b border-gray-200 p-4">
@@ -12,7 +14,14 @@ const MindMapHeader: React.FC<MindMapHeaderProps> = ({
         <div className="flex items-center gap-4">
           <div className="flex items-center px-3 py-2 bg-blue-50 border border-blue-200 rounded-lg">
             <span className="text-xs text-blue-700 font-medium">
-              💡 Click on the tree area to enable keyboard shortcuts • Use ↑↓←→ arrow keys to navigate • Press F to expand/collapse notes • Double-click nodes to edit titles • Click blue edit button inside nodes for content • Orange +/- icon = expandable • Green clip icon = has content • Right-click for menu • Ctrl+E to edit content
+              💡 Click on the tree area to enable keyboard shortcuts • 
+              {layoutType === 'horizontal' 
+                ? 'Use ↑↓ for parent/child, ←→ for siblings' 
+                : 'Use ←→ for parent/child, ↑↓ for siblings'
+              } • 
+              Press F to expand/collapse notes • Double-click nodes to edit titles • 
+              Click blue edit button inside nodes for content • Orange +/- icon = expandable • 
+              Green clip icon = has content • Right-click for menu • Ctrl+E to edit content
             </span>
           </div>
           <div className="flex items-center gap-2 bg-gray-100 rounded-lg p-1">
@@ -34,6 +43,13 @@ const MindMapHeader: React.FC<MindMapHeaderProps> = ({
               +
             </button>
           </div>
+          <button 
+            className="px-3 py-2 bg-indigo-100 hover:bg-indigo-200 text-indigo-700 rounded-lg transition-all duration-200 font-medium text-sm"
+            onClick={onToggleLayout}
+            title={`Switch to ${layoutType === 'horizontal' ? 'vertical' : 'horizontal'} layout`}
+          >
+            {layoutType === 'horizontal' ? '↔️ Horizontal' : '↕️ Vertical'}
+          </button>
         </div>
       </div>
     </div>

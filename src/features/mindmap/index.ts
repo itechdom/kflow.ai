@@ -26,3 +26,7 @@ export * from './types/mindMapTypes';
 // Export utilities
 export * from './utils/mindMapUtils';
 export * from './utils/mindMapConstants';
+
+// Export layout types
+export { LAYOUT_TYPES } from './utils/mindMapConstants';
+export type { LayoutType } from './utils/mindMapConstants';

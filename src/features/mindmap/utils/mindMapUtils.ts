@@ -94,8 +94,13 @@ export const layoutTree = (
   y: number, 
   level: number, 
   siblingIndex: number, 
-  totalSiblings: number
+  totalSiblings: number,
+  layoutType: 'horizontal' | 'vertical' = 'horizontal'
 ): LayoutResult => {
+  if (layoutType === 'vertical') {
+    return layoutTreeVertical(node, x, y, level, siblingIndex, totalSiblings);
+  }
+  
   const horizontalSpacing = MINDMAP_CONSTANTS.HORIZONTAL_SPACING;
   const verticalSpacing = MINDMAP_CONSTANTS.VERTICAL_SPACING;
 
@@ -119,7 +124,7 @@ export const layoutTree = (
     
     for (let i = 0; i < node.children.length; i++) {
       const child = node.children[i];
-      const childLayout = layoutTree(child, 0, y + verticalSpacing + nodeHeight, level + 1, i, node.children.length);
+      const childLayout = layoutTree(child, 0, y + verticalSpacing + nodeHeight, level + 1, i, node.children.length, layoutType);
       childWidths.push(childLayout.totalWidth);
       totalChildrenWidth += childLayout.totalWidth;
     }
@@ -136,7 +141,7 @@ export const layoutTree = (
     
     for (let i = 0; i < node.children.length; i++) {
       const child = node.children[i];
-      const childLayout = layoutTree(child, currentChildX, y + verticalSpacing + nodeHeight, level + 1, i, node.children.length);
+      const childLayout = layoutTree(child, currentChildX, y + verticalSpacing + nodeHeight, level + 1, i, node.children.length, layoutType);
       
       // Update child position to match the calculated position
       childLayout.nodes.forEach(childNode => {
@@ -155,6 +160,76 @@ export const layoutTree = (
   }
 
   return { nodes, connections, totalWidth };
+};
+
+// Vertical layout function
+export const layoutTreeVertical = (
+  node: TreeNode, 
+  x: number, 
+  y: number, 
+  level: number, 
+  siblingIndex: number, 
+  totalSiblings: number
+): LayoutResult => {
+  const horizontalSpacing = MINDMAP_CONSTANTS.HORIZONTAL_SPACING;
+  const verticalSpacing = MINDMAP_CONSTANTS.VERTICAL_SPACING;
+
+  const nodeWidth = calculateNodeWidth(node.title);
+  const nodeHeight = calculateNodeHeight(node.title, nodeWidth);
+
+  node.x = x;
+  node.y = y;
+  node.width = nodeWidth;
+  node.height = nodeHeight;
+  node.level = level;
+
+  const nodes: TreeNode[] = [node];
+  const connections: { source: TreeNode; target: TreeNode }[] = [];
+  let totalHeight = nodeHeight;
+
+  if (node.children.length > 0) {
+    // First pass: calculate the total height needed for all children
+    let totalChildrenHeight = 0;
+    const childHeights: number[] = [];
+    
+    for (let i = 0; i < node.children.length; i++) {
+      const child = node.children[i];
+      const childLayout = layoutTreeVertical(child, x + horizontalSpacing + nodeWidth, 0, level + 1, i, node.children.length);
+      childHeights.push(childLayout.totalHeight || childLayout.totalWidth);
+      totalChildrenHeight += childLayout.totalHeight || childLayout.totalWidth;
+    }
+    
+    // Add spacing between children
+    if (node.children.length > 1) {
+      totalChildrenHeight += (node.children.length - 1) * verticalSpacing;
+    }
+    
+    totalHeight = Math.max(nodeHeight, totalChildrenHeight);
+    
+    // Second pass: position children with proper spacing
+    let currentChildY = y - totalChildrenHeight / 2 + childHeights[0] / 2;
+    
+    for (let i = 0; i < node.children.length; i++) {
+      const child = node.children[i];
+      const childLayout = layoutTreeVertical(child, x + horizontalSpacing + nodeWidth, currentChildY, level + 1, i, node.children.length);
+      
+      // Update child position to match the calculated position
+      childLayout.nodes.forEach(childNode => {
+        if (childNode.id === child.id) {
+          childNode.y = currentChildY;
+        }
+      });
+      
+      nodes.push(...childLayout.nodes);
+      connections.push({ source: node, target: child });
+      connections.push(...childLayout.connections);
+      
+      // Move to next child position
+      currentChildY += childHeights[i] / 2 + verticalSpacing + childHeights[i + 1] / 2;
+    }
+  }
+
+  return { nodes, connections, totalWidth: nodeWidth, totalHeight };
 };
 
 export const calculateGroupBounds = (nodes: TreeNode[]): Bounds => {
