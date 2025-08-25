@@ -6,7 +6,7 @@ import { Note } from '../features/notes/types';
 import { ArrowLeft, List, Map } from 'lucide-react';
 import SearchBar from '../components/SearchBar';
 import NoteList from '../features/notes/components/NoteList';
-import MindMap from '../features/notes/components/MindMap';
+import { MindMap } from '../features/mindmap';
 import { UserProfile } from '../features/auth';
 
 const NotePage: React.FC = () => {

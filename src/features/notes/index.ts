@@ -3,7 +3,7 @@ export { default as NoteList } from './components/NoteList';
 export { default as NoteListItem } from './components/NoteListItem';
 export { default as NoteListCard } from './components/NoteListCard';
 export { default as NoteForm } from './components/NoteForm';
-export { default as MindMap } from './components/MindMap';
+export { MindMap } from '../mindmap';
 export { default as AIGenerator } from './components/AIGenerator';
 
 // Export types

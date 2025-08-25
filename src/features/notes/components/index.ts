@@ -6,5 +6,5 @@ export { default as NoteListCard } from './NoteListCard';
 export { default as NoteTags } from './NoteTags';
 export { default as NoteTitle } from './NoteTitle';
 export { default as NoteContent } from './NoteContent';
-export { default as MindMap } from './MindMap';
+export { MindMap } from '../../mindmap';
 export { default as AIGenerator } from './AIGenerator';
