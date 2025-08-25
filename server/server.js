@@ -96,18 +96,17 @@ app.post('/api/generate-children', async (req, res) => {
     }
 
     const completion = await openai.chat.completions.create({
-      model: "gpt-3.5-turbo",
+      model: "gpt-5-mini",
       messages: [
         {
           role: "system",
-          content: "You are a teacher that teaches topics by creating child notes for a parent note. Generate as many relevant child notes that would logically belong under the parent note. Each child should be a specific subtopic or aspect of the parent topic. the idea is to teach someone by walking them through this topic step by step. Return the response as a JSON array of objects with 'title', 'content', and 'tags' properties."
+          content: "You are a teacher that teaches topics by creating child notes for a parent note. Generate as many relevant child notes that would logically belong under the parent note. Each child should be a specific subtopic or aspect of the parent topic. the idea is to teach someone by walking them through this topic step by step. Return the response as a JSON array of objects with 'title', 'content', and 'tags' properties. keep it simple and give a general overview of the topic."
         },
         {
           role: "user",
           content: `Generate child notes for a parent note titled "${parentTitle}". ${parentContent ? `Parent content: ${parentContent}` : ''} ${parentTags && parentTags.length > 0 ? `Parent tags: ${parentTags.join(', ')}` : ''}. Create as many child notes that are logical subtopics.`
         }
-      ],
-      temperature: 0.5,
+      ]
     });
 
     const generatedContent = completion.choices[0]?.message?.content || '';
