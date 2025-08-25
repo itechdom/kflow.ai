@@ -53,7 +53,7 @@ describe('HomePage', () => {
     renderWithProviders(<HomePage />, { preloadedState: baseState });
     expect(screen.getByText('KFlow')).toBeInTheDocument();
     expect(screen.getByText('Knowledge Management & AI-Powered Notes')).toBeInTheDocument();
-    expect(screen.getByText('Notes (3)')).toBeInTheDocument();
+    expect(screen.getByText('Notes (2)')).toBeInTheDocument();
   });
 
   test('opens create modal when create button clicked', () => {

@@ -32,7 +32,7 @@ function renderWithProvidersAndRouter(route: string, preloadedState: any) {
       <Provider store={store}>
         <MemoryRouter initialEntries={[route]}>
           <Routes>
-            <Route path="/note/:noteId" element={<NotePage />} />
+            <Route path="/note/:id" element={<NotePage />} />
             <Route path="/" element={<div>Home</div>} />
           </Routes>
         </MemoryRouter>
@@ -64,7 +64,7 @@ describe('NotePage', () => {
   test('renders current note title for existing note', () => {
     renderWithProvidersAndRouter('/note/n1', baseState);
     // Check that the note title appears somewhere on the page
-    expect(screen.getByText('Parent Note')).toBeInTheDocument();
+    expect(screen.getAllByText('Parent Note')).toHaveLength(2);
   });
 
   test('back button navigates to home', () => {
