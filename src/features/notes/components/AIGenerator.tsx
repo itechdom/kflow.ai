@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Sparkles, Loader2 } from 'lucide-react';
 import { useGenerateNote } from '../queries';
+import { Loader } from '../../../components';
 
 interface AIGeneratorProps {
   onFillForm: (data: { title: string; content: string; tags: string[] }) => void;
@@ -50,7 +51,7 @@ const AIGenerator: React.FC<AIGeneratorProps> = ({ onFillForm }) => {
     }
   };
 
-  return (
+    return (
     <div className="space-y-4">
       <div className="flex items-center gap-2">
         <Sparkles size={18} className="text-indigo-600" />
@@ -58,6 +59,16 @@ const AIGenerator: React.FC<AIGeneratorProps> = ({ onFillForm }) => {
           AI Content Generator
         </h3>
       </div>
+      
+      {/* Show full-screen loader when AI is generating */}
+      {isPending && (
+        <Loader 
+          size="lg" 
+          text="AI is generating content..." 
+          overlay={true}
+          className="z-50"
+        />
+      )}
       
       <div className="space-y-3">
         <textarea
@@ -85,7 +96,7 @@ const AIGenerator: React.FC<AIGeneratorProps> = ({ onFillForm }) => {
               <Sparkles size={16} />
               Generate Content
             </>
-          )}
+            )}
         </button>
       </div>
 

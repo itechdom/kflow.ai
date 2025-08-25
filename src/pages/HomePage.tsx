@@ -14,6 +14,7 @@ const HomePage: React.FC = () => {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [isCreatingNote, setIsCreatingNote] = useState(false);
   // Get state from Redux
   const { notes, selectedNote, searchQuery } = useAppSelector(state => state.notes);
 
@@ -62,6 +63,8 @@ const HomePage: React.FC = () => {
   };
 
   const handleSaveNote = (noteData: Partial<Note>) => {
+    setIsCreatingNote(true);
+    
     // Create a complete note object from the partial data
     const newNote: Omit<Note, "id" | "createdAt" | "updatedAt" | "isExpanded"> = {
       title: noteData.title || '',
@@ -75,12 +78,15 @@ const HomePage: React.FC = () => {
     // Create the note in Redux
     dispatch(createNote(newNote));
     
-    // Close the modal
-    setShowCreateModal(false);
-    
-    // Navigate to the newly created note's page
-    // The note will be created with a new ID, so we need to find it
+    // Simulate API call delay
     setTimeout(() => {
+      setIsCreatingNote(false);
+      
+      // Close the modal
+      setShowCreateModal(false);
+      
+      // Navigate to the newly created note's page
+      // The note will be created with a new ID, so we need to find it
       const createdNote = notes.find(note => 
         note.title === newNote.title && 
         note.content === newNote.content &&
@@ -91,7 +97,7 @@ const HomePage: React.FC = () => {
       if (createdNote) {
         navigate(`/note/${createdNote.id}`);
       }
-    }, 100);
+    }, 1000); // 1 second delay to show loading state
   };
 
   const handleCancelCreate = () => {
@@ -150,6 +156,7 @@ const HomePage: React.FC = () => {
           onSave={handleSaveNote}
           onCancel={handleCancelCreate}
           isCreating={true}
+          isLoading={isCreatingNote}
         />
       </Modal>
     </div>

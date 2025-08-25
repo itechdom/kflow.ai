@@ -1,6 +1,7 @@
 import React, { useCallback, useRef, useState, useEffect } from 'react';
 import { Note } from '../notes/types';
 import { MindMapProps } from './types/mindMapTypes';
+import { Loader } from '../../components';
 import { useMindMapLayout } from './hooks/useMindMapLayout';
 import { useMindMapZoomPan } from './hooks/useMindMapZoomPan';
 import { useMindMapEditing } from './hooks/useMindMapEditing';
@@ -202,6 +203,15 @@ const MindMap: React.FC<MindMapProps> = ({
             onMouseLeave={handleMouseLeave}
             isDragging={isDragging}
         >
+            {/* Show full-screen loader when AI is generating children */}
+            {isGeneratingChildren && (
+                <Loader 
+                    size="lg" 
+                    text="AI is generating children..." 
+                    overlay={true}
+                    className="z-50"
+                />
+            )}
             <MindMapHeader
                 zoom={zoom}
                 layoutType={layoutType}
