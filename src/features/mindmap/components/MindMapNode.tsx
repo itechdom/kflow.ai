@@ -297,7 +297,8 @@ const MindMapNode: React.FC<MindMapNodeProps> = ({
                 justifyContent: 'center',
                 background: 'rgba(34, 197, 94, 0.1)',
                 borderRadius: '4px',
-                border: '1px solid rgba(34, 197, 94, 0.3)'
+                border: '1px solid rgba(34, 197, 94, 0.3)',
+                cursor: 'pointer'
               }}
             >
               <Paperclip onClick={() => onOpenContentEditor(note)} size={10} color="#22c55e" />
