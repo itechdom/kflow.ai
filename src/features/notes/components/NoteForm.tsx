@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Note } from '../types';
 import { Save, Tag, Plus, X } from 'lucide-react';
 import AIGenerator from './AIGenerator';
+import MDEditor from '@uiw/react-md-editor';
 
 interface NoteFormProps {
   note?: Note;
@@ -110,15 +111,16 @@ const NoteForm: React.FC<NoteFormProps> = ({
           <label htmlFor="note-content" className="block text-sm font-medium text-gray-700">
             Content:
           </label>
-          <textarea
-            id="note-content"
-            value={content}
-            onChange={(e) => setContent(e.target.value)}
-            onScroll={e => e.stopPropagation()}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors duration-200 resize-vertical min-h-[200px]"
-            rows={8}
-            placeholder="Enter note content..."
-          />
+          <div className="border border-gray-300 rounded-md overflow-hidden">
+            <MDEditor
+              value={content}
+              onChange={(value) => setContent(value || '')}
+              height={200}
+              preview="edit"
+              hideToolbar={false}
+              className="min-h-[200px]"
+            />
+          </div>
         </div>
 
         <div className="space-y-2">

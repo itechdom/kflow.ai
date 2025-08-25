@@ -136,7 +136,6 @@ const NoteListItem: React.FC<NoteListItemProps> = ({
 					onStartEditing={startEditing}
 					onCancelEdit={cancelEdit}
 					onKeyDown={handleContentKeyDown}
-					contentTextareaRefs={contentTextareaRefs}
 					showFullContent={showFullContent}
 				/>
 				

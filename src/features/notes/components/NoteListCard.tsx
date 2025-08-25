@@ -140,7 +140,6 @@ const NoteListCard: React.FC<NoteListCardProps> = ({
 					onStartEditing={startEditing}
 					onCancelEdit={cancelEdit}
 					onKeyDown={handleContentKeyDown}
-					contentTextareaRefs={contentTextareaRefs}
 					showFullContent={showFullContent}
 				/>
 			</div>
