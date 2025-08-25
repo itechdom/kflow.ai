@@ -203,9 +203,6 @@ const NotePage: React.FC = () => {
                 {currentNote.title}
               </h1>
               <div className="flex items-center justify-center gap-3">
-                <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-indigo-100 text-indigo-800">
-                  Level {currentNote.level}
-                </span>
                 {currentNote.parentId && (
                   <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-yellow-100 text-yellow-800">
                     Parent: {notes.find(n => n.id === currentNote.parentId)?.title || 'Unknown'}

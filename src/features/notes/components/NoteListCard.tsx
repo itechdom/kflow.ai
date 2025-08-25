@@ -1,6 +1,9 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React from 'react';
 import { Note } from '../types';
-import { Edit3, Trash2, Save, X, Tag, Plus } from 'lucide-react';
+import { Trash2, Plus } from 'lucide-react';
+import NoteTags from './NoteTags';
+import NoteTitle from './NoteTitle';
+import NoteContent from './NoteContent';
 
 interface NoteListCardProps {
 	note: Note;
@@ -102,153 +105,66 @@ const NoteListCard: React.FC<NoteListCardProps> = ({
 			}}
 		>
 			<div className="flex justify-between items-start mb-3">
-				{isEditingTitle ? (
-					<div className="flex-1 mr-3" onClick={(e) => e.stopPropagation()}>
-						<input
-							ref={(el) => { titleInputRefs.current[note.id] = el; }}
-							type="text"
-							className={`w-full px-3 py-2 border-2 border-blue-500 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-200 transition-all duration-200 ${
-								isNewChildNote 
-									? 'bg-orange-50 border-orange-500' 
-									: 'bg-white'
-							}`}
-							value={editValues.title}
-							onChange={(e) => {
-								const newTitle = e.target.value;
-								setEditValues({ ...editValues, title: newTitle });
-								queueAutoSave(note, { title: newTitle });
-							}}
-							onBlur={() => cancelEdit()}
-							autoFocus
-							onClick={(e) => e.stopPropagation()}
-							placeholder={isNewChildNote ? "Enter note title..." : "Enter title..."}
-							onKeyDown={(e) => {
-								if (e.key === 'Enter') {
-									e.preventDefault();
-									cancelEdit();
-								} else if (e.key === 'Escape') {
-									e.preventDefault();
-									cancelEdit();
-								}
-							}}
-						/>
-					</div>
-				) : (
-					<h4 
-						className="flex-1 text-lg font-semibold text-gray-900 hover:text-blue-600 hover:bg-blue-50 px-2 py-1 rounded cursor-pointer transition-all duration-200 mr-3"
-						onClick={(e) => { e.stopPropagation(); startEditing(note, 'title'); }}
-						title="Click to edit title"
-					>
-						{note.title}
-					</h4>
-				)}
-				<span className="px-2 py-1 bg-gray-100 text-gray-600 text-xs font-medium rounded-full flex-shrink-0">
-					L{note.level}
-				</span>
+				<NoteTitle
+					note={note}
+					isEditing={isEditingTitle}
+					editValues={editValues}
+					onTitleChange={(value) => {
+						setEditValues({ ...editValues, title: value });
+						queueAutoSave(note, { title: value });
+					}}
+					onStartEditing={startEditing}
+					onCancelEdit={cancelEdit}
+					onKeyDown={(e) => {
+						if (e.key === 'Enter') {
+							e.preventDefault();
+							cancelEdit();
+						} else if (e.key === 'Escape') {
+							e.preventDefault();
+							cancelEdit();
+						}
+					}}
+					titleInputRefs={titleInputRefs}
+					className="mr-3"
+				/>
 			</div>
 			<div className="mb-3">
-				{isEditingContent ? (
-					<textarea
-						className="w-full px-3 py-2 border-2 border-blue-500 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-200 transition-all duration-200 resize-none min-h-[100px]"
-						value={editValues.content}
-						onChange={(e) => {
-							const newContent = e.target.value;
-							setEditValues({ ...editValues, content: newContent });
-							queueAutoSave(note, { content: newContent });
-						}}
-						rows={4}
-						onBlur={() => cancelEdit()}
-						autoFocus
-						ref={(el) => { 
-							contentTextareaRefs.current[note.id] = el; 
-						}}
-						onKeyDown={(e) => handleContentKeyDown(e, note)}
-						onClick={(e) => e.stopPropagation()}
-						placeholder="Tab → tags, Shift+Tab → title"
-					/>
-				) : (
-					<p 
-						className="text-gray-700 hover:text-blue-600 hover:bg-blue-50 px-2 py-1 rounded cursor-pointer transition-all duration-200 min-h-[24px]"
-						onClick={(e) => { e.stopPropagation(); startEditing(note, 'content'); }}
-						title="Click to edit content"
-					>
-						{!showFullContent 
-							? `${note.content.substring(0, 100)}...` 
-							: note.content || 'No content'
-						}
-					</p>
-				)}
+				<NoteContent
+					note={note}
+					isEditing={isEditingContent}
+					editValues={editValues}
+					onContentChange={(value) => {
+						setEditValues({ ...editValues, content: value });
+						queueAutoSave(note, { content: value });
+					}}
+					onStartEditing={startEditing}
+					onCancelEdit={cancelEdit}
+					onKeyDown={handleContentKeyDown}
+					contentTextareaRefs={contentTextareaRefs}
+					showFullContent={showFullContent}
+				/>
 			</div>
 			<div className="flex justify-between items-center mb-3">
 				<span className="text-sm text-gray-500">{formatDate(note.updatedAt)}</span>
-				{isEditingTags ? (
-					<div
-						className="flex-1 ml-4"
-						ref={tagsContainerRef}
-						onClick={(e) => e.stopPropagation()}
-						onBlur={(e) => {
-							const next = e.relatedTarget as Node | null;
-							if (!next || (tagsContainerRef.current && !tagsContainerRef.current.contains(next))) {
-								cancelEdit();
-							}
-						}}
-					>
-						<div className="flex gap-2 mb-2">
-							<input
-								type="text"
-								className="flex-1 px-2 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-500"
-								value={newTag}
-								onChange={(e) => {
-									setNewTag(e.target.value);
-									// Autosave on typing in tag input (saving current tags state)
-									queueAutoSave(note, { tags: editValues.tags });
-								}}
-								onKeyPress={(e) => handleKeyPress(e, note)}
-								onKeyDown={(e) => handleTagInputKeyDown(e, note)}
-								onClick={(e) => e.stopPropagation()}
-								placeholder="Add a tag..."
-							/>
-							<button
-								className="px-2 py-1 bg-blue-600 text-white rounded text-sm hover:bg-blue-700 transition-colors duration-200 flex items-center justify-center"
-								onMouseDown={(e) => e.preventDefault()}
-								onClick={() => handleAddTag(note)}
-							>
-								<Plus size={12} />
-							</button>
-						</div>
-						<div className="flex flex-wrap gap-1">
-							{editValues.tags.map(tag => (
-								<span key={tag} className="inline-flex items-center gap-1 px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-medium">
-									#{tag}
-									<button
-										className="text-blue-600 hover:text-blue-800 hover:bg-blue-200 rounded-full p-0.5 transition-colors duration-200"
-										onMouseDown={(e) => e.preventDefault()}
-										onClick={() => handleRemoveTag(note, tag)}
-									>
-										<X size={10} />
-									</button>
-								</span>
-							))}
-						</div>
-					</div>
-				) : (
-					<div 
-						className="flex items-center gap-2 cursor-pointer hover:bg-blue-50 px-2 py-1 rounded transition-colors duration-200"
-						onClick={(e) => { e.stopPropagation(); startEditing(note, 'tags'); }}
-						title="Click to edit tags"
-					>
-						{note.tags.length > 0 ? (
-							<>
-								{note.tags.slice(0, 3).map(tag => (
-									<span key={tag} className="px-2 py-1 bg-gray-100 text-gray-700 rounded-full text-xs font-medium">#{tag}</span>
-								))}
-								{note.tags.length > 3 && <span className="text-xs text-gray-500">+{note.tags.length - 3}</span>}
-							</>
-						) : (
-							<span className="text-xs text-gray-400 italic">Click to add tags</span>
-						)}
-					</div>
-				)}
+				<NoteTags
+					note={note}
+					isEditing={isEditingTags}
+					editValues={editValues}
+					newTag={newTag}
+					onAddTag={handleAddTag}
+					onRemoveTag={handleRemoveTag}
+					onKeyPress={handleKeyPress}
+					onTagInputKeyDown={handleTagInputKeyDown}
+					onNewTagChange={(value) => {
+						setNewTag(value);
+						// Autosave on typing in tag input (saving current tags state)
+						queueAutoSave(note, { tags: editValues.tags });
+					}}
+					onStartEditing={startEditing}
+					onCancelEdit={cancelEdit}
+					maxDisplayTags={3}
+					className="ml-4"
+				/>
 			</div>
 			<div className="flex justify-end">
 				<button

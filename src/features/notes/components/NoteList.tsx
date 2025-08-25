@@ -326,16 +326,6 @@ const NoteList: React.FC<NoteListProps> = ({
 			<div className="flex justify-between items-center">
 				<div className="space-y-2">
 					<h3 className="text-2xl font-bold text-gray-900">Notes ({notes.length})</h3>
-					<div className="flex gap-2">
-						{Array.from(new Set(notesWithChildren.map(n => n.level))).sort().map(level => {
-							const count = notesWithChildren.filter(n => n.level === level).length;
-							return (
-								<span key={level} className="px-3 py-1 bg-indigo-100 text-indigo-800 text-sm font-medium rounded-full">
-									L{level}: {count}
-								</span>
-							);
-						})}
-					</div>
 				</div>
 				{showCreateButton && (
 					<button 
