@@ -18,6 +18,7 @@ interface UseMindMapEditingReturn {
   saveEdit: (note: Note) => void;
   openContentEditor: (note: Note) => void;
   closeContentEditor: () => void;
+  onEditValuesChange: (values: { title: string; content: string }) => void;
 }
 
 export const useMindMapEditing = ({ 
@@ -79,6 +80,10 @@ export const useMindMapEditing = ({
     setEditValues({ title: '', content: '' });
   }, []);
 
+  const onEditValuesChange = useCallback((values: { title: string; content: string }) => {
+    setEditValues(values);
+  }, []);
+
   return {
     editingState,
     editValues,
@@ -88,6 +93,7 @@ export const useMindMapEditing = ({
     cancelEdit,
     saveEdit,
     openContentEditor,
-    closeContentEditor
+    closeContentEditor,
+    onEditValuesChange
   };
 };

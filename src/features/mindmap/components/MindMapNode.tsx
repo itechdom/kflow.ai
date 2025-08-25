@@ -18,7 +18,8 @@ const MindMapNode: React.FC<MindMapNodeProps> = ({
   onCancelEdit,
   onOpenContentEditor,
   onEditNote,
-  onAIGenerateChildren
+  onAIGenerateChildren,
+  onEditValuesChange
 }) => {
   const titleInputRef = useRef<HTMLInputElement>(null);
   const isNewChildNote = note?.title === 'New Child Note' && note?.content === 'Add your content here...';
@@ -32,7 +33,13 @@ const MindMapNode: React.FC<MindMapNodeProps> = ({
   const handleTitleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' || e.key === 'Tab') {
       e.preventDefault();
-      if (note) onSaveEdit(note);
+      if (note) {
+        const updatedNote = {
+          ...note,
+          title: editValues.title
+        };
+        onSaveEdit(updatedNote);
+      }
     } else if (e.key === 'Escape') {
       e.preventDefault();
       onCancelEdit();
@@ -40,7 +47,11 @@ const MindMapNode: React.FC<MindMapNodeProps> = ({
   };
 
   const handleTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    // This will be handled by the parent component
+    // Update the editValues in the parent component
+    onEditValuesChange({
+      title: e.target.value,
+      content: editValues.content
+    });
   };
 
   const handleToggleExpand = (e: React.MouseEvent) => {
@@ -94,7 +105,15 @@ const MindMapNode: React.FC<MindMapNodeProps> = ({
               onChange={handleTitleChange}
               onKeyDown={handleTitleKeyDown}
               ref={titleInputRef}
-              onBlur={() => onSaveEdit(note)}
+              onBlur={() => {
+                if (note) {
+                  const updatedNote = {
+                    ...note,
+                    title: editValues.title
+                  };
+                  onSaveEdit(updatedNote);
+                }
+              }}
               style={{
                 width: '100%',
                 height: '100%',

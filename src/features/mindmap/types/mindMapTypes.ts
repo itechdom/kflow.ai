@@ -57,6 +57,7 @@ export interface MindMapNodeProps {
   onOpenContentEditor: (note: Note) => void;
   onEditNote: (note: Note) => void;
   onAIGenerateChildren: (note: Note) => Promise<void>;
+  onEditValuesChange: (values: { title: string; content: string }) => void;
 }
 
 export interface MindMapConnectionsProps {

@@ -29,6 +29,7 @@ const NoteContentModal: React.FC<NoteContentModalProps> = ({
             updatedAt: new Date()
           };
           onSave(updatedNote);
+          onClose(); // Close the modal after saving
         }}
         onCancel={onClose}
         isCreating={false}
