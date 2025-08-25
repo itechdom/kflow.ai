@@ -31,7 +31,7 @@ if (process.env.OPENAI_API_KEY && process.env.OPENAI_API_KEY !== 'your_openai_ap
 // AI Note Generation Endpoint
 app.post('/api/generate-note', async (req, res) => {
   try {
-    const { prompt } = req.body;
+    const { prompt, parentTitle, parentContent, parentTags } = req.body;
 
     if (!prompt) {
       return res.status(400).json({ error: 'Prompt is required' });
@@ -53,7 +53,7 @@ app.post('/api/generate-note', async (req, res) => {
         },
         {
           role: "user",
-          content: `Create a note about: ${prompt}. Make it informative and well-structured.`
+          content: `Create a note about: ${prompt}. Make it informative and well-structured. ${parentTitle ? `Parent title: ${parentTitle}` : ''}  ${parentContent ? `Parent content: ${parentContent}` : ''} ${parentTags && parentTags.length > 0 ? `Parent tags: ${parentTags.join(', ')}` : ''}`
         }
       ],
       max_tokens: 500,
@@ -96,7 +96,7 @@ app.post('/api/generate-children', async (req, res) => {
     }
 
     const completion = await openai.chat.completions.create({
-      model: "gpt-5-mini",
+      model: "gpt-5-nano",
       messages: [
         {
           role: "system",
