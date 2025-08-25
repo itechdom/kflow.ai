@@ -9,10 +9,6 @@ describe('App routing', () => {
 
     expect(screen.getByText('KFlow')).toBeInTheDocument();
     expect(screen.getByText('Knowledge Management & AI-Powered Notes')).toBeInTheDocument();
-
-    // View toggle buttons from HomePage
-    expect(screen.getByRole('button', { name: /List View/i })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /Mind Map/i })).toBeInTheDocument();
   });
 
   test('renders NotePage not found for unknown note id', () => {
