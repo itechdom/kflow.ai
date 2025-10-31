@@ -1,5 +1,8 @@
 import { Request, Response } from 'express';
 
+// Concept graph types (Phase 1)
+export * from './concept';
+
 // Request body types
 export interface GenerateNoteRequest {
   prompt: string;

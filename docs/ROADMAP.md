@@ -18,11 +18,11 @@ Each phase builds on the previous, integrating technical, design, and AI-driven 
 1. **Schema Definition**
    - Use the minimal structure:
      ```json
-     {"name": "", "description": "", "parents": [], "children": [], "related": []}
+     {"name": "", "description": "", "parents": [], "children": []}
      ```
    - Build merge utility functions:
      - Merge by `name`
-     - Union parent/child/related arrays
+     - Union parent/child arrays
      - Preserve existing data (avoid overwrite)
 
 2. **Prompt Library**
@@ -35,8 +35,7 @@ Each phase builds on the previous, integrating technical, design, and AI-driven 
    - Validate JSON output using schema parsers.
 
 4. **Graph Assembly Script**
-   - Parse LLM output and build directed acyclic graph (DAG) in memory.
-   - Visualize graph structure using `networkx` or `vis-network`.
+   - Parse LLM output and build a json object with the scheme mentioned above.
 
 ### **Deliverables**
 - `/prompts` directory containing 9 finalized prompts  

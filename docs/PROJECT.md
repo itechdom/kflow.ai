@@ -53,8 +53,7 @@ All operations adhere to this structure:
   "name": "Concept Name",
   "description": "Short explanation of the concept.",
   "parents": [],
-  "children": [],
-  "related": []
+  "children": []
 }
 ```
 Additional fields (attention_score, validation_score, etc.) are added by specific operations as needed.
@@ -149,8 +148,7 @@ Generate 5–10 concepts related to "{{concept_name}}", including diverse ideas.
 Include only:
 
 - `"name"`  
-- `"description"`  
-- `"related"`: array containing "{{concept_name}}"  
+- `"description"` 
 
 Return JSON array only. Merge related if concept already exists.
 
@@ -181,9 +179,8 @@ For each concept, include only:
 - `"name"`  
 - `"validation_score"` (0–1)  
 - `"parents"`: array of parent names  
-- `"related"`: array of related concept names  
 
-Return JSON array only. Merge parents/related if concept exists.
+Return JSON array only. Merge parents if concept exists.
 
 ---
 

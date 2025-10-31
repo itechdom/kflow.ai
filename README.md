@@ -9,8 +9,6 @@ KFlow is a knowledge management application with AI-powered note generation capa
 - `npm run build` - Build the app for production
 - `npm test` - Run Jest tests with React Testing Library
 - `npm run dev` - Start both frontend and backend concurrently (requires server setup)
-- `npm run server` - Start the backend server (from server/ directory)
-- `npm run server:dev` - Start backend with nodemon for development
 
 ### Backend (server/ directory)
 - `npm run build` - Compile TypeScript to JavaScript
