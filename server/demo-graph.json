@@ -1,0 +1,146 @@
+[
+  {
+    "name": "JavaScript",
+    "description": "A high-level, interpreted programming language",
+    "parents": [],
+    "children": []
+  },
+  {
+    "name": "Variables",
+    "description": "Containers for storing data values.",
+    "parents": [
+      "JavaScript"
+    ],
+    "children": []
+  },
+  {
+    "name": "Functions",
+    "description": "Blocks of code that can be called and executed.",
+    "parents": [
+      "JavaScript"
+    ],
+    "children": []
+  },
+  {
+    "name": "Arrays",
+    "description": "Variables that can hold multiple values.",
+    "parents": [
+      "JavaScript"
+    ],
+    "children": []
+  },
+  {
+    "name": "Objects",
+    "description": "Complex data structures with properties and methods.",
+    "parents": [
+      "JavaScript"
+    ],
+    "children": []
+  },
+  {
+    "name": "DOM Manipulation",
+    "description": "Interacting with the Document Object Model of a web page.",
+    "parents": [
+      "JavaScript"
+    ],
+    "children": []
+  },
+  {
+    "name": "Node.js",
+    "description": "A runtime environment that allows running JavaScript code outside of a web browser",
+    "parents": [],
+    "children": []
+  },
+  {
+    "name": "React",
+    "description": "A JavaScript library for building user interfaces, developed by Facebook",
+    "parents": [],
+    "children": []
+  },
+  {
+    "name": "D3.js",
+    "description": "A JavaScript library for creating interactive data visualizations in the browser",
+    "parents": [],
+    "children": []
+  },
+  {
+    "name": "TypeScript",
+    "description": "A superset of JavaScript that adds static typing to the language",
+    "parents": [],
+    "children": []
+  },
+  {
+    "name": "AJAX",
+    "description": "Asynchronous JavaScript and XML, a technique used for creating interactive web applications",
+    "parents": [],
+    "children": []
+  },
+  {
+    "name": "Webpack",
+    "description": "A module bundler for JavaScript applications, helps manage dependencies and assets",
+    "parents": [],
+    "children": []
+  },
+  {
+    "name": "ES6",
+    "description": "ECMAScript 2015, a major update to the JavaScript language with new features and syntax",
+    "parents": [],
+    "children": []
+  },
+  {
+    "name": "WebAssembly",
+    "description": "A binary instruction format for a stack-based virtual machine, used as a compilation target for programming languages",
+    "parents": [],
+    "children": []
+  },
+  {
+    "name": "Local Variables",
+    "description": "Variables that are declared inside a function and have local scope.",
+    "parents": [
+      "Variables"
+    ],
+    "children": []
+  },
+  {
+    "name": "Global Variables",
+    "description": "Variables that are declared outside of any function and have global scope.",
+    "parents": [
+      "Variables"
+    ],
+    "children": []
+  },
+  {
+    "name": "Recursive Functions",
+    "description": "Functions that call themselves either directly or indirectly in order to solve a problem.",
+    "parents": [
+      "Functions"
+    ],
+    "children": []
+  },
+  {
+    "name": "Anonymous Functions",
+    "description": "Functions that are declared without a name and are often used as arguments to other functions.",
+    "parents": [
+      "Functions"
+    ],
+    "children": []
+  },
+  {
+    "name": "Variable Functions",
+    "description": "Variable functions are dynamic functions that can operate on variables directly, allowing for flexible data manipulation and processing.",
+    "parents": [
+      "Variables",
+      "Functions"
+    ],
+    "children": []
+  },
+  {
+    "name": "Function Variables",
+    "description": "Function variables refer to the ability to store functions in variables, enabling higher-order programming and functional programming paradigms.",
+    "parents": [
+      "Variables",
+      "Functions"
+    ],
+    "children": []
+  }
+]

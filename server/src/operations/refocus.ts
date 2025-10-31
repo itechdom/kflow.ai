@@ -1,7 +1,7 @@
-import { Concept, ExtendedConcept, OperationResult } from '../types/concept';
+import { Concept, ExtendedConcept } from '../types/concept';
 import { refocusSystemPrompt } from '../prompts';
 import { callLLM, extractJSONArray } from '../services/llm';
-import { validateConcept, validateExtendedConcept, normalizeConcept, validateConceptArray } from '../utils/validation';
+import { validateExtendedConcept, normalizeConcept, validateConceptArray } from '../utils/validation';
 
 /**
  * Updates attention scores for concepts based on a goal
@@ -75,11 +75,12 @@ export async function refocus(
   });
 
   // Validate all results
-  normalizedResults.forEach(result => {
+  for (const result of normalizedResults) {
+    const conceptName = result.name || 'unknown';
     if (!validateExtendedConcept(result)) {
-      throw new Error(`Invalid extended concept in refocus result: ${result.name}`);
+      throw new Error(`Invalid extended concept in refocus result: ${conceptName}`);
     }
-  });
+  }
 
   return normalizedResults;
 }

@@ -63,11 +63,12 @@ export async function deriveSummary(concepts: Concept[]): Promise<OperationResul
   });
 
   // Validate all results
-  normalizedResults.forEach(result => {
+  for (const result of normalizedResults) {
+    const conceptName = result.name || 'unknown';
     if (!validateConcept(result)) {
-      throw new Error(`Invalid concept in deriveSummary result: ${result.name}`);
+      throw new Error(`Invalid concept in deriveSummary result: ${conceptName}`);
     }
-  });
+  }
 
   return normalizedResults;
 }

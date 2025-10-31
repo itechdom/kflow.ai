@@ -50,11 +50,12 @@ export async function explore(
   });
 
   // Validate all results
-  normalizedResults.forEach(result => {
+  for (const result of normalizedResults) {
+    const conceptName = result.name || 'unknown';
     if (!validateConcept(result)) {
-      throw new Error(`Invalid concept in explore result: ${result.name}`);
+      throw new Error(`Invalid concept in explore result: ${conceptName}`);
     }
-  });
+  }
 
   return normalizedResults;
 }

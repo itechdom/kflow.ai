@@ -67,11 +67,12 @@ export async function tracePath(start: Concept, end: Concept): Promise<Operation
   }
 
   // Validate all results
-  normalizedResults.forEach(result => {
+  for (const result of normalizedResults) {
+    const conceptName = result.name || 'unknown';
     if (!validateConcept(result)) {
-      throw new Error(`Invalid concept in tracePath result: ${result.name}`);
+      throw new Error(`Invalid concept in tracePath result: ${conceptName}`);
     }
-  });
+  }
 
   return normalizedResults;
 }

@@ -1,7 +1,7 @@
-import { Concept, ExtendedConcept, OperationResult } from '../types/concept';
+import { Concept, ExtendedConcept } from '../types/concept';
 import { validateLinksSystemPrompt } from '../prompts';
 import { callLLM, extractJSONArray } from '../services/llm';
-import { validateConcept, validateExtendedConcept, normalizeConcept, validateConceptArray } from '../utils/validation';
+import { validateExtendedConcept, normalizeConcept, validateConceptArray } from '../utils/validation';
 
 /**
  * Validates relationships between concepts
@@ -60,11 +60,12 @@ export async function validateLinks(concepts: Concept[]): Promise<ExtendedConcep
   });
 
   // Validate all results
-  normalizedResults.forEach(result => {
+  for (const result of normalizedResults) {
+    const conceptName = result.name || 'unknown';
     if (!validateExtendedConcept(result)) {
-      throw new Error(`Invalid extended concept in validateLinks result: ${result.name}`);
+      throw new Error(`Invalid extended concept in validateLinks result: ${conceptName}`);
     }
-  });
+  }
 
   return normalizedResults;
 }

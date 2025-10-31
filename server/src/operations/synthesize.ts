@@ -53,11 +53,12 @@ export async function synthesize(parents: Concept[]): Promise<OperationResult> {
   });
 
   // Validate all results
-  normalizedResults.forEach(result => {
+  for (const result of normalizedResults) {
+    const conceptName = result.name || 'unknown';
     if (!validateConcept(result)) {
-      throw new Error(`Invalid concept in synthesize result: ${result.name}`);
+      throw new Error(`Invalid concept in synthesize result: ${conceptName}`);
     }
-  });
+  }
 
   return normalizedResults;
 }

@@ -23,7 +23,6 @@ import {
   deriveSummary,
 } from '../operations';
 import { validateConcept, validateExtendedConcept } from '../utils/validation';
-import { createGraph, addConceptsToGraph } from '../utils/graph';
 
 // Load environment variables
 dotenv.config({ path: path.join(__dirname, '..', '..', '.env') });
