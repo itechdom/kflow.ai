@@ -1,13 +1,15 @@
-function extractTags(prompt) {
+import { ChildNote } from '../types';
+
+export function extractTags(prompt: string): string[] {
   const commonTags = ['meeting', 'study', 'work', 'personal', 'ideas', 'todo', 'project'];
   const promptLower = (prompt || '').toLowerCase();
   return commonTags.filter((tag) => promptLower.includes(tag));
 }
 
-function parseStructuredResponse(content) {
-  const children = [];
+export function parseStructuredResponse(content: string): ChildNote[] {
+  const children: ChildNote[] = [];
   const lines = (content || '').split('\n');
-  let currentChild = null;
+  let currentChild: ChildNote | null = null;
 
   for (const line of lines) {
     const trimmedLine = line.trim();
@@ -51,8 +53,8 @@ function parseStructuredResponse(content) {
   return children;
 }
 
-function generateFallbackChildren(parentTitle) {
-  const baseChildren = [
+export function generateFallbackChildren(parentTitle: string): ChildNote[] {
+  const baseChildren: ChildNote[] = [
     {
       title: `Introduction to ${parentTitle}`,
       content: `Basic introduction and overview of ${parentTitle}`,
@@ -72,7 +74,4 @@ function generateFallbackChildren(parentTitle) {
 
   return baseChildren;
 }
-
-module.exports = { extractTags, parseStructuredResponse, generateFallbackChildren };
-
 

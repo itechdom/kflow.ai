@@ -1,7 +1,7 @@
-const request = require('supertest');
+import request from 'supertest';
 
 // Helper to mock OpenAI client per test
-function mockOpenAIWithContent(content) {
+function mockOpenAIWithContent(content: string): void {
   jest.resetModules();
   jest.doMock('../src/config/openai', () => {
     return {
@@ -18,7 +18,7 @@ function mockOpenAIWithContent(content) {
   });
 }
 
-function mockOpenAINull() {
+function mockOpenAINull(): void {
   jest.resetModules();
   jest.doMock('../src/config/openai', () => {
     return { getOpenAI: () => null };
@@ -33,7 +33,7 @@ describe('KFlow API', () => {
   });
 
   test('GET /api/health returns OK', async () => {
-    const app = require('../src/app');
+    const app = require('../src/app').default;
     const res = await request(app).get('/api/health');
     expect(res.status).toBe(200);
     expect(res.body).toEqual({ status: 'OK', message: 'KFlow API is running' });
@@ -41,7 +41,7 @@ describe('KFlow API', () => {
 
   test('POST /api/generate-note 400 without prompt', async () => {
     mockOpenAIWithContent('irrelevant');
-    const app = require('../src/app');
+    const app = require('../src/app').default;
     const res = await request(app).post('/api/generate-note').send({});
     expect(res.status).toBe(400);
     expect(res.body.error).toMatch(/Prompt is required/i);
@@ -49,7 +49,7 @@ describe('KFlow API', () => {
 
   test('POST /api/generate-note returns structured note with mocked OpenAI', async () => {
     mockOpenAIWithContent('This is generated content.');
-    const app = require('../src/app');
+    const app = require('../src/app').default;
     const res = await request(app)
       .post('/api/generate-note')
       .send({ prompt: 'Study project meeting notes' });
@@ -61,7 +61,7 @@ describe('KFlow API', () => {
 
   test('POST /api/generate-children 400 without parentTitle', async () => {
     mockOpenAIWithContent('irrelevant');
-    const app = require('../src/app');
+    const app = require('../src/app').default;
     const res = await request(app).post('/api/generate-children').send({});
     expect(res.status).toBe(400);
     expect(res.body.error).toMatch(/Parent title is required/i);
@@ -73,7 +73,7 @@ describe('KFlow API', () => {
       { title: 'Deep Dive', content: 'Details', tags: ['details'] },
     ]);
     mockOpenAIWithContent(childrenJson);
-    const app = require('../src/app');
+    const app = require('../src/app').default;
     const res = await request(app)
       .post('/api/generate-children')
       .send({ parentTitle: 'Topic' });
@@ -86,7 +86,7 @@ describe('KFlow API', () => {
 
   test('Endpoints return 500 when OpenAI is not configured', async () => {
     mockOpenAINull();
-    const app = require('../src/app');
+    const app = require('../src/app').default;
 
     const noteRes = await request(app)
       .post('/api/generate-note')
@@ -101,5 +101,4 @@ describe('KFlow API', () => {
     expect(childrenRes.body.error).toMatch(/OpenAI API key not configured/i);
   });
 });
-
 

@@ -1,7 +1,18 @@
-const { getOpenAI } = require('../config/openai');
-const { extractTags, parseStructuredResponse, generateFallbackChildren } = require('../utils/text');
+import { Request, Response } from 'express';
+import { getOpenAI } from '../config/openai';
+import { extractTags, parseStructuredResponse, generateFallbackChildren } from '../utils/text';
+import {
+  GenerateNoteRequest,
+  GenerateChildrenRequest,
+  NoteResponse,
+  GenerateChildrenResponse,
+  HealthResponse,
+} from '../types';
 
-async function generateNote(req, res) {
+export async function generateNote(
+  req: Request<{}, NoteResponse | { error: string; note?: string } | { error: string; details: string }, GenerateNoteRequest>,
+  res: Response<NoteResponse | { error: string; note?: string } | { error: string; details: string }>
+): Promise<void | Response> {
   try {
     const { prompt, parentTitle, parentContent, parentTags } = req.body;
 
@@ -36,7 +47,7 @@ async function generateNote(req, res) {
 
     const generatedContent = completion.choices[0]?.message?.content || '';
 
-    const response = {
+    const response: NoteResponse = {
       title: prompt.length > 50 ? prompt.substring(0, 50) + '...' : prompt,
       content: generatedContent,
       tags: extractTags(prompt),
@@ -45,11 +56,15 @@ async function generateNote(req, res) {
     res.json(response);
   } catch (error) {
     console.error('Error generating note:', error);
-    res.status(500).json({ error: 'Failed to generate note', details: error.message });
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    res.status(500).json({ error: 'Failed to generate note', details: errorMessage });
   }
 }
 
-async function generateChildren(req, res) {
+export async function generateChildren(
+  req: Request<{}, GenerateChildrenResponse | { error: string; note?: string } | { error: string; details: string }, GenerateChildrenRequest>,
+  res: Response<GenerateChildrenResponse | { error: string; note?: string } | { error: string; details: string }>
+): Promise<void | Response> {
   try {
     const { parentTitle, parentContent, parentTags } = req.body;
 
@@ -82,11 +97,11 @@ async function generateChildren(req, res) {
 
     const generatedContent = completion.choices[0]?.message?.content || '';
 
-    let children = [];
+    let children: Array<{ title: string; content: string; tags: string[] }> = [];
     try {
       const jsonMatch = generatedContent.match(/\[.*\]/s);
       if (jsonMatch) {
-        children = JSON.parse(jsonMatch[0]);
+        children = JSON.parse(jsonMatch[0]) as Array<{ title: string; content: string; tags: string[] }>;
       } else {
         children = parseStructuredResponse(generatedContent);
       }
@@ -99,17 +114,19 @@ async function generateChildren(req, res) {
       children = generateFallbackChildren(parentTitle);
     }
 
-    res.json({ children });
+    const response: GenerateChildrenResponse = { children };
+    res.json(response);
   } catch (error) {
     console.error('Error generating children:', error);
-    res.status(500).json({ error: 'Failed to generate children', details: error.message });
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    res.status(500).json({ error: 'Failed to generate children', details: errorMessage });
   }
 }
 
-function health(req, res) {
+export function health(
+  req: Request,
+  res: Response<HealthResponse>
+): void {
   res.json({ status: 'OK', message: 'KFlow API is running' });
 }
-
-module.exports = { generateNote, generateChildren, health };
-
 
