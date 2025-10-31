@@ -1,177 +1,163 @@
-# KFlow - Knowledge Management & AI-Powered Notes
+# CLAUDE.md
 
-A modern React-based knowledge management application that allows users to create, edit, delete, and search through their notes. Features AI-powered note generation using OpenAI's API.
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-## Features
+## Project Overview
 
-- 📝 **Note Management**: Create, edit, and delete notes with a clean interface
-- 🔍 **Search Functionality**: Search through notes by title and content
-- 🤖 **AI Integration**: Generate notes on the fly using OpenAI's GPT models
-- 💾 **Local Storage**: Notes are automatically saved to browser localStorage
-- 📱 **Responsive Design**: Works seamlessly on desktop and mobile devices
-- 🎨 **Modern UI**: Beautiful, intuitive interface with smooth animations
+KFlow is a knowledge management application with AI-powered note generation capabilities. It's built with React 19 + TypeScript on the frontend, Express.js backend, and uses Firebase for authentication and data persistence.
 
-## Tech Stack
+## Common Development Commands
 
-- **Frontend**: React 19 + TypeScript
-- **Styling**: CSS3 with modern design principles
-- **Icons**: Lucide React
-- **AI Integration**: OpenAI API
-- **Backend**: Express.js server
-- **Storage**: Browser localStorage + optional backend persistence
-
-## Prerequisites
-
-- Node.js (v16 or higher)
-- npm or yarn
-- OpenAI API key (for AI features)
-
-## Installation
-
-1. **Clone the repository**
-   ```bash
-   git clone <your-repo-url>
-   cd kflow
-   ```
-
-2. **Install dependencies**
-   ```bash
-   npm install
-   ```
-
-3. **Set up environment variables**
-   ```bash
-   # Copy the example environment file
-   cp env.example .env
-   
-   # Edit .env and add your OpenAI API key
-   OPENAI_API_KEY=your_openai_api_key_here
-   PORT=3001
-   ```
-
-4. **Start the development server**
-   ```bash
-   # Start both frontend and backend
-   npm run dev
-   
-   # Or start them separately:
-   npm run start        # Frontend only
-   npm run server:dev   # Backend only
-   ```
-
-## Usage
-
-### Creating Notes
-- Click the "+" button in the sidebar to create a new note
-- Use the AI Generator to create notes with AI assistance
-- Type your content and click "Save"
-
-### Editing Notes
-- Click on any note in the sidebar to view it
-- Click the "Edit" button to modify the note
-- Make your changes and click "Save"
-
-### Searching Notes
-- Use the search bar at the top of the sidebar
-- Search by title or content
-- Results update in real-time
-
-### AI Note Generation
-- Enter a description of the note you want in the AI Generator
-- Click "Generate Note" to create AI-powered content
-- Try the example prompts for inspiration
-
-## API Endpoints
-
-- `POST /api/generate-note` - Generate notes using AI
-- `GET /api/health` - Health check endpoint
-
-## Project Structure
-
-```
-kflow/
-├── src/
-│   ├── components/
-│   │   ├── NoteList.tsx      # Note list sidebar
-│   │   ├── NoteEditor.tsx    # Note editing interface
-│   │   ├── SearchBar.tsx     # Search functionality
-│   │   └── AIGenerator.tsx   # AI integration
-│   ├── types/
-│   │   └── Note.ts           # TypeScript interfaces
-│   ├── App.tsx               # Main application component
-│   └── App.css               # Application styles
-├── server.js                 # Express backend server
-├── package.json              # Frontend dependencies
-└── env.example               # Environment variables template
-```
-
-## Configuration
-
-### OpenAI API Setup
-1. Get your API key from [OpenAI Platform](https://platform.openai.com/)
-2. Add it to your `.env` file
-3. The AI features will automatically be enabled
-
-### Customization
-- Modify the AI prompt in `server.js` to change how notes are generated
-- Adjust the styling in `src/App.css`
-- Add new note types or fields in `src/types/Note.ts`
-
-## Development
-
-### Available Scripts
-- `npm start` - Start the React development server
+- `npm start` - Start React development server (frontend only)
 - `npm run build` - Build the app for production
-- `npm run server` - Start the backend server
-- `npm run server:dev` - Start the backend with nodemon
-- `npm run dev` - Start both frontend and backend in development mode
+- `npm test` - Run Jest tests with React Testing Library
+- `npm run dev` - Start both frontend and backend concurrently (requires server setup)
+- `npm run server` - Start the backend server (from server/ directory)
+- `npm run server:dev` - Start backend with nodemon for development
 
-### Adding New Features
-1. Create new components in `src/components/`
-2. Add TypeScript interfaces in `src/types/`
-3. Update the main App component as needed
-4. Style your components in `App.css`
+## Architecture Overview
 
-## Deployment
+### State Management
+- **Redux Toolkit** with RTK Query for global state management
+- **React Query** (@tanstack/react-query) for server state and caching
+- Store configuration in `src/app/store.ts` with rootReducer pattern
 
-### Frontend
-```bash
-npm run build
-# Deploy the build/ folder to your hosting service
+### Redux Slices and State Structure
+
+#### Notes Slice (`src/features/notes/noteSlice.ts`)
+Manages hierarchical note data and UI state:
+
+**State Shape:**
+```typescript
+interface NoteState {
+  notes: Note[];           // All notes with hierarchical relationships
+  selectedNote: Note | null; // Currently selected note for viewing/editing
+  searchQuery: string;     // Current search filter
+  isLoading: boolean;      // Loading state for async operations
+  error: string | null;    // Error messages
+}
 ```
 
-### Backend
-```bash
-npm run server
-# Deploy to your preferred hosting service (Heroku, Vercel, etc.)
+**Key Actions:**
+- `createNote` - Creates new note and updates parent's children array
+- `editNote` - Updates note content and timestamps
+- `deleteNote` - Removes note and cleans up parent-child relationships
+- `addChildNote` - Creates child note with proper hierarchy
+- `aiGenerateChildren` - Batch creates multiple AI-generated child notes
+- `toggleNoteExpanded`/`expandNote`/`collapseNote` - Controls note expansion state
+- `selectNote` - Sets currently selected note
+- `setSearchQuery`/`clearSearch` - Manages search functionality
+
+**Hierarchical Note Management:**
+- Notes maintain parent-child relationships via `parentId` and `children` arrays
+- Level tracking for proper indentation/visualization
+- Automatic parent updates when adding/removing children
+- Expansion state management for tree navigation
+
+#### Auth Slice (`src/features/auth/authSlice.ts`)
+Manages Firebase user authentication state:
+
+**State Shape:**
+```typescript
+interface AuthState {
+  user: User | null;       // Firebase User object
+  loading: boolean;        // Auth loading state
+  error: string | null;    // Auth error messages
+}
 ```
 
-## Contributing
+**Key Actions:**
+- `setUser` - Sets authenticated user (null for logout)
+- `setLoading`/`setError`/`clearError` - Loading and error state management
+- `signOut` - Clears user and error state
 
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Add tests if applicable
-5. Submit a pull request
+### Routing & Authentication
+- **React Router v7** for client-side routing
+- **Firebase Authentication** for user management
+- Protected routes wrap all main application pages
+- Routes: `/` (home), `/note/:id` (note detail), `/widgets` (widgets page), `/login`
 
-## License
+### Feature-Based Architecture
+The codebase follows a feature-based folder structure:
 
-MIT License - see LICENSE file for details
+```
+src/
+├── features/
+│   ├── auth/           # Authentication logic, components, and services
+│   ├── notes/          # Note management (CRUD, AI generation, types)
+│   └── mindmap/        # Interactive mind map visualization
+├── components/         # Shared UI components
+├── pages/             # Route-level page components
+├── services/          # API clients and configurations
+├── app/               # Store, providers, and app-level configuration
+└── utils/             # Shared utilities
+```
 
-## Support
+### Key Data Models
+- **Note**: Core entity with hierarchical structure (parentId, children, level)
+  - Fields: id, title, content, createdAt, updatedAt, tags, parentId, children, level, isExpanded
+- Notes support nested relationships for building knowledge hierarchies
 
-If you encounter any issues or have questions:
-1. Check the console for error messages
-2. Verify your OpenAI API key is correct
-3. Ensure all dependencies are installed
-4. Check that both frontend and backend are running
+### Backend Integration
+- Express.js server (separate from React app)
+- OpenAI API integration for AI note generation
+- Endpoints: `/api/generate-note`, `/api/health`
+- Firebase Admin SDK for server-side authentication
 
-## Future Enhancements
+### Styling & UI
+- **Tailwind CSS** for utility-first styling
+- **Lucide React** for icons
+- Responsive design with mobile-first approach
 
-- [ ] User authentication and cloud sync
-- [ ] Note categories and tags
-- [ ] Rich text editing
-- [ ] Note sharing and collaboration
-- [ ] Advanced AI features (summarization, translation)
-- [ ] Mobile app
-- [ ] Export/import functionality
+### Key Integrations
+- **OpenAI API** for AI-powered note generation
+- **Firebase** for authentication and potential data persistence
+- **Matter.js** and **Three.js** for physics and 3D visualizations in widgets
+
+## Environment Configuration
+
+Required environment variables:
+- `REACT_APP_FIREBASE_*` - Firebase configuration
+- `OPENAI_API_KEY` - For AI features (backend)
+- `PORT` - Backend server port (default: 3001)
+
+Environment files: `.env`, `.env.local`, `.env.production`, `server/.env`
+
+## Testing
+- Jest + React Testing Library setup
+- Test files in `src/pages/__tests__/`
+- Run with `npm test`
+
+## Development Notes
+
+### Working with Notes
+- Notes support hierarchical relationships (parent-child)
+- Use Redux actions for state mutations (never mutate directly)
+- AI generation hooks: `useAIGeneratedNote`, `useAIGeneratedChildren`
+- Filtering and search via `useFilteredNotes`, `useHomeNotes`
+
+### Redux Usage Patterns
+- Import actions from slice files: `import { createNote, editNote } from '../features/notes/noteSlice'`
+- Use `useAppDispatch` and `useAppSelector` hooks from `src/app/hooks.ts`
+- Maintain hierarchical consistency when creating/deleting notes
+- Update `updatedAt` timestamps when modifying notes
+- Batch operations using dedicated actions (e.g., `aiGenerateChildren`)
+
+### MindMap Feature
+- Interactive visualization using native **SVG** rendering (not D3.js)
+- Custom layout algorithms in `mindMapUtils.ts` for horizontal/vertical tree positioning
+- Custom hooks for editing, layout, zoom/pan, keyboard navigation
+- Context menu support for node interactions
+- Text wrapping and node sizing calculations handled in utilities
+
+### State Management Patterns
+- Use RTK Query for server state
+- Use React Query for additional caching needs
+- Feature-specific slices (notes, auth)
+- Combine reducers in `rootReducer.ts`
+
+### Code Organization
+- Each feature exports through index.ts barrel files
+- Shared components in `src/components/`
+- Types defined per feature in `types.ts` files
+- Custom hooks in feature-specific `hooks/` directories
