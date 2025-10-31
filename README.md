@@ -1,19 +1,24 @@
-# CLAUDE.md
-
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
-
 ## Project Overview
 
 KFlow is a knowledge management application with AI-powered note generation capabilities. It's built with React 19 + TypeScript on the frontend, Express.js backend, and uses Firebase for authentication and data persistence.
 
 ## Common Development Commands
 
+### Frontend (Root Directory)
 - `npm start` - Start React development server (frontend only)
 - `npm run build` - Build the app for production
 - `npm test` - Run Jest tests with React Testing Library
 - `npm run dev` - Start both frontend and backend concurrently (requires server setup)
 - `npm run server` - Start the backend server (from server/ directory)
 - `npm run server:dev` - Start backend with nodemon for development
+
+### Backend (server/ directory)
+- `npm run build` - Compile TypeScript to JavaScript
+- `npm start` - Start production server (runs compiled code from `dist/`)
+- `npm run dev` - Start development server with hot reload (`ts-node-dev`)
+- `npm test` - Run server tests with Jest
+- `npm run test:watch` - Run tests in watch mode
+- `npm run type-check` - Type check without emitting files
 
 ## Architecture Overview
 
@@ -99,10 +104,61 @@ src/
 - Notes support nested relationships for building knowledge hierarchies
 
 ### Backend Integration
-- Express.js server (separate from React app)
-- OpenAI API integration for AI note generation
-- Endpoints: `/api/generate-note`, `/api/health`
-- Firebase Admin SDK for server-side authentication
+
+The backend is a TypeScript Express.js server located in the `server/` directory.
+
+**Server Structure:**
+```
+server/
+├── src/                    # TypeScript source files
+│   ├── app.ts             # Express app configuration and middleware
+│   ├── server.ts          # Server entry point and startup
+│   ├── config/            # Configuration modules
+│   │   └── openai.ts      # OpenAI client configuration
+│   ├── controllers/       # Request handlers
+│   │   └── aiController.ts # AI generation endpoints
+│   ├── routes/            # Route definitions
+│   │   └── index.ts       # API route definitions
+│   ├── services/          # Business logic services
+│   ├── models/            # Data models (database schemas)
+│   ├── middlewares/       # Express middlewares
+│   ├── validators/        # Request validation logic
+│   ├── utils/             # Utility functions
+│   │   └── text.ts        # Text processing utilities
+│   ├── types/             # TypeScript type definitions
+│   │   └── index.ts       # Shared types and interfaces
+│   └── jobs/              # Background jobs/scheduled tasks
+├── dist/                  # Compiled JavaScript output
+├── tests/                 # Test files
+│   └── app.test.ts        # Application tests
+├── logs/                  # Server logs directory
+├── scripts/               # Utility scripts
+├── public/                # Static files (if needed)
+├── package.json           # Server dependencies and scripts
+├── tsconfig.json          # TypeScript configuration
+└── server.js              # Legacy entry point (if exists)
+```
+
+**API Endpoints:**
+- `GET /api/health` - Health check endpoint
+- `POST /api/generate-note` - Generate a single AI note
+- `POST /api/generate-children` - Generate multiple child notes for a parent
+
+**Server Scripts:**
+- `npm run build` - Compile TypeScript to JavaScript
+- `npm start` - Start production server (from `dist/`)
+- `npm run dev` - Start development server with hot reload (`ts-node-dev`)
+- `npm test` - Run server tests with Jest
+- `npm run test:watch` - Run tests in watch mode
+- `npm run type-check` - Type check without emitting files
+
+**Technologies:**
+- **Express.js** - Web framework
+- **TypeScript** - Type-safe development
+- **OpenAI API** - AI note generation
+- **CORS** - Cross-origin resource sharing
+- **dotenv** - Environment variable management
+- **Jest** - Testing framework
 
 ### Styling & UI
 - **Tailwind CSS** for utility-first styling
@@ -124,9 +180,17 @@ Required environment variables:
 Environment files: `.env`, `.env.local`, `.env.production`, `server/.env`
 
 ## Testing
+
+### Frontend Testing
 - Jest + React Testing Library setup
 - Test files in `src/pages/__tests__/`
-- Run with `npm test`
+- Run with `npm test` (from root directory)
+
+### Backend Testing
+- Jest + Supertest for API testing
+- Test files in `server/tests/`
+- Run with `npm test` (from `server/` directory)
+- Test configuration uses `ts-jest` for TypeScript support
 
 ## Development Notes
 
