@@ -75,9 +75,9 @@ export async function callLLM(request: LLMRequest): Promise<LLMResponse> {
   const {
     systemPrompt,
     userPrompt,
-    model = 'gpt-3.5-turbo',
-    temperature = 0.7,
-    maxTokens = 2000,
+    model = 'gpt-5-nano',
+    //temperature = 0.7,
+    //maxTokens = 2000,
   } = request;
 
   try {
@@ -93,8 +93,8 @@ export async function callLLM(request: LLMRequest): Promise<LLMResponse> {
           content: userPrompt,
         },
       ],
-      temperature,
-      max_tokens: maxTokens,
+      //temperature,
+      //max_tokens: maxTokens,
       // Note: response_format can only be used for json_object, not arrays
       // We'll extract JSON arrays manually from the response
     });
