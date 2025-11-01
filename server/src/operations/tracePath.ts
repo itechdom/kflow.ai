@@ -36,14 +36,15 @@ export async function tracePath(start: Concept, end: Concept): Promise<Operation
     throw new Error(`Failed to parse LLM response: ${error instanceof Error ? error.message : 'Unknown error'}`);
   }
 
-  // Normalize and validate results
-  // Path should maintain order, so we preserve the array order
-  const normalizedResults: Concept[] = results.map((item: any, index: number) => {
-    const normalized = normalizeConcept(item);
-    // For path concepts, establish sequential relationships
-    if (index > 0) {
+  // Normalize results first (without referencing normalizedResults in the map)
+  const normalizedResults: Concept[] = results.map((item: any) => normalizeConcept(item));
+
+  // Now establish sequential relationships in a second pass
+  for (let i = 0; i < normalizedResults.length; i++) {
+    const normalized = normalizedResults[i];
+    if (i > 0) {
       // Add previous concept as parent
-      const prevName = normalizedResults[index - 1]?.name || start.name;
+      const prevName = normalizedResults[i - 1]?.name || start.name;
       if (!normalized.parents.includes(prevName)) {
         normalized.parents.push(prevName);
       }
@@ -53,8 +54,7 @@ export async function tracePath(start: Concept, end: Concept): Promise<Operation
         normalized.parents.push(start.name);
       }
     }
-    return normalized;
-  });
+  }
 
   // Ensure end concept is in the path or add it
   const lastConcept = normalizedResults[normalizedResults.length - 1];

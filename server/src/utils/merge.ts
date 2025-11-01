@@ -13,6 +13,7 @@ export function unionArrays(arr1: string[], arr2: string[]): string[] {
  * - Unions parents arrays (removes duplicates)
  * - Unions children arrays (removes duplicates)
  * - Preserves existing data (non-destructive merge)
+ * - Preserves layer field (prefers incoming if provided, otherwise keeps existing)
  */
 export function mergeConcepts(existing: Concept, incoming: Concept): Concept {
   if (existing.name !== incoming.name) {
@@ -24,6 +25,7 @@ export function mergeConcepts(existing: Concept, incoming: Concept): Concept {
     description: existing.description || incoming.description, // Preserve existing, fallback to incoming
     parents: unionArrays(existing.parents, incoming.parents),
     children: unionArrays(existing.children, incoming.children),
+    layer: incoming.layer !== undefined ? incoming.layer : existing.layer, // Prefer incoming layer, fallback to existing
   };
 }
 

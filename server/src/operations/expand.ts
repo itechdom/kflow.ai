@@ -14,8 +14,16 @@ export async function expand(concept: Concept): Promise<OperationResult> {
     throw new Error('Invalid concept input for expand operation');
   }
 
-  // Use template strings directly
-  const userPrompt = `Generate 3–7 sub-concepts of "${concept.name}" as a JSON array. For each sub-concept, include only these exact fields: "name" (concept name), "description" (short explanation), "parents" (array containing "${concept.name}"), "children" (empty array []). Return JSON array only, no text, no extra fields.`;
+  // Build context information for the prompt
+  const parentsInfo = concept.parents.length > 0 
+    ? `Parent concepts: ${concept.parents.join(', ')}. `
+    : '';
+  const childrenInfo = concept.children.length > 0
+    ? `Existing child concepts (do NOT generate these again): ${concept.children.join(', ')}. `
+    : '';
+  
+  // Use template strings directly with full context
+  const userPrompt = `Generate 3–7 foundational NEW sub-concepts of "${concept.name}" (Description: ${concept.description}). ${parentsInfo}${childrenInfo}For each NEW sub-concept, include only these exact fields: "name" (concept name), "description" (short explanation), "parents" (array containing "${concept.name}"), "children" (empty array []). Do NOT generate concepts that already exist in the children list. Return JSON array only, no text, no extra fields.`;
 
   // Call LLM
   const response = await callLLM({
@@ -53,6 +61,14 @@ export async function expand(concept: Concept): Promise<OperationResult> {
     }
   }
 
-  return normalizedResults;
+  // Add new children to the parent's children array
+  const updatedConcept: Concept = {
+    ...concept,
+    children: [...concept.children, ...normalizedResults.map(c => c.name)],
+  };
+
+  // Return both the new children and the updated parent concept
+  // The caller should merge the updated parent into the graph
+  return [...normalizedResults, updatedConcept];
 }
 

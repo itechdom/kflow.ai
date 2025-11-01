@@ -15,11 +15,11 @@ import {
   deriveParents,
   explore,
   refocus,
-  validateLinks,
   tracePath,
   deriveSummary,
+  progressiveExpand,
 } from '../operations';
-import { createGraph, addConceptsToGraph, getAllConcepts } from '../utils/graph';
+import { createGraph, addConceptsToGraph, getAllConcepts, getConcept } from '../utils/graph';
 
 // Load environment variables
 dotenv.config({ path: path.join(__dirname, '..', '..', '.env') });
@@ -51,6 +51,9 @@ function displayConcepts(concepts: Concept[], title: string = 'Concepts') {
   }
   concepts.forEach((concept, i) => {
     console.log(`  ${i + 1}. ${concept.name}`);
+    if (concept.layer !== undefined) {
+      console.log(`     Layer: ${concept.layer}`);
+    }
     console.log(`     ${concept.description}`);
     if (concept.parents.length > 0) {
       console.log(`     Parents: ${concept.parents.join(', ')}`);
@@ -159,14 +162,24 @@ async function runExpand() {
   const concept = await selectConcept('Select concept to expand');
   if (!concept) return;
 
+  // Get the latest concept from graph to ensure we have current children list
+  const latestConcept = getConcept(graph, concept.name) || concept;
+
   try {
     console.log('\n⏳ Generating...');
-    const results = await expand(concept);
+    const results = await expand(latestConcept);
     graph = addConceptsToGraph(graph, results);
     
-    console.log(`\n✅ Generated ${results.length} child concepts:`);
-    displayConcepts(results, 'New Concepts');
-    console.log('✓ Added to graph\n');
+    // Filter out the updated parent concept from display
+    const newChildren = results.filter(r => r.name !== latestConcept.name);
+    const updatedParent = results.find(r => r.name === latestConcept.name);
+    
+    console.log(`\n✅ Generated ${newChildren.length} child concepts:`);
+    displayConcepts(newChildren, 'New Concepts');
+    if (updatedParent) {
+      console.log(`\n✓ Updated parent "${latestConcept.name}" children list: ${updatedParent.children.join(', ')}`);
+    }
+    console.log('\n✓ Added to graph\n');
   } catch (error) {
     console.error('❌ Error:', error instanceof Error ? error.message : error);
   }
@@ -251,6 +264,9 @@ async function runExplore() {
   const concept = await selectConcept('Select concept to explore');
   if (!concept) return;
 
+  // Get the latest concept from graph to ensure we have current state
+  const latestConcept = getConcept(graph, concept.name) || concept;
+
   const diversityInput = await question('Diversity level (low/medium/high) [high]: ');
   const diversity = ['low', 'medium', 'high'].includes(diversityInput.toLowerCase())
     ? diversityInput.toLowerCase() as 'low' | 'medium' | 'high'
@@ -258,12 +274,21 @@ async function runExplore() {
 
   try {
     console.log('\n⏳ Generating...');
-    const results = await explore(concept, diversity);
+    const results = await explore(latestConcept, diversity);
     graph = addConceptsToGraph(graph, results);
     
-    console.log(`\n✅ Generated ${results.length} related concepts:`);
-    displayConcepts(results, 'New Concepts');
-    console.log('✓ Added to graph\n');
+    // Filter out updated parent concepts from display
+    const newSiblings = results.filter(r => !latestConcept.parents.includes(r.name) && r.name !== latestConcept.name);
+    const updatedParents = results.filter(r => latestConcept.parents.includes(r.name));
+    
+    console.log(`\n✅ Generated ${newSiblings.length} sibling concepts:`);
+    displayConcepts(newSiblings, 'New Sibling Concepts');
+    if (updatedParents.length > 0) {
+      console.log(`\n✓ Updated ${updatedParents.length} parent concept(s) to include siblings`);
+    } else if (latestConcept.parents.length === 0) {
+      console.log(`\n✓ Root-level concepts (siblings of "${latestConcept.name}")`);
+    }
+    console.log('\n✓ Added to graph\n');
   } catch (error) {
     console.error('❌ Error:', error instanceof Error ? error.message : error);
   }
@@ -308,38 +333,6 @@ async function runRefocus() {
 }
 
 /**
- * Operation: validateLinks
- */
-async function runValidateLinks() {
-  console.log('\n✓ Validate Links Operation');
-  console.log('Validates relationships between concepts\n');
-  
-  const concepts = await selectConcepts('Select concepts to validate');
-  if (concepts.length === 0) return;
-
-  try {
-    console.log('\n⏳ Validating...');
-    const results = await validateLinks(concepts);
-    graph = addConceptsToGraph(graph, results.map(r => ({
-      name: r.name,
-      description: r.description,
-      parents: r.parents,
-      children: r.children,
-    })));
-    
-    console.log(`\n✅ Validated ${results.length} concepts:`);
-    results.forEach((result, i) => {
-      console.log(`\n  ${i + 1}. ${result.name}`);
-      console.log(`     Validation Score: ${result.validation_score?.toFixed(2) || 'N/A'}`);
-      console.log(`     Parents: ${result.parents.join(', ') || 'none'}`);
-    });
-    console.log('\n✓ Updated in graph\n');
-  } catch (error) {
-    console.error('❌ Error:', error instanceof Error ? error.message : error);
-  }
-}
-
-/**
  * Operation: tracePath
  */
 async function runTracePath() {
@@ -374,19 +367,133 @@ async function runTracePath() {
  */
 async function runDeriveSummary() {
   console.log('\n📝 Derive Summary Operation');
-  console.log('Generates summary concepts for a layer\n');
+  console.log('Generates summary concepts for a specific layer\n');
   
-  const concepts = await selectConcepts('Select concepts in layer');
-  if (concepts.length === 0) return;
+  // Get all concepts with layer numbers
+  const allConcepts = getAllConcepts(graph);
+  const conceptsWithLayers = allConcepts.filter(c => c.layer !== undefined);
+  
+  if (conceptsWithLayers.length === 0) {
+    console.log('\n⚠️  No concepts with layer numbers found. Please create concepts with layers first.\n');
+    return;
+  }
+  
+  // Find available layer numbers
+  const availableLayers = Array.from(new Set(conceptsWithLayers.map(c => c.layer!))).sort((a, b) => a - b);
+  
+  console.log('\nAvailable layers:');
+  availableLayers.forEach(layer => {
+    const layerConcepts = conceptsWithLayers.filter(c => c.layer === layer);
+    console.log(`  Layer ${layer}: ${layerConcepts.length} concept(s)`);
+  });
+  console.log('');
+  
+  // Ask for layer number
+  const layerInput = await question('Enter layer number to summarize: ');
+  const layerNumber = parseInt(layerInput, 10);
+  
+  if (isNaN(layerNumber) || !availableLayers.includes(layerNumber)) {
+    console.log(`\n❌ Invalid layer number. Please choose from: ${availableLayers.join(', ')}\n`);
+    return;
+  }
+  
+  // Filter concepts by layer number
+  const concepts = conceptsWithLayers.filter(c => c.layer === layerNumber);
+  
+  if (concepts.length === 0) {
+    console.log(`\n⚠️  No concepts found for layer ${layerNumber}\n`);
+    return;
+  }
+  
+  console.log(`\n📚 Found ${concepts.length} concept(s) in layer ${layerNumber}:`);
+  concepts.forEach((c, i) => {
+    console.log(`  ${i + 1}. ${c.name}`);
+  });
+  console.log('');
 
   try {
-    console.log('\n⏳ Generating summary...');
+    console.log('⏳ Generating summary...');
     const results = await deriveSummary(concepts);
     graph = addConceptsToGraph(graph, results);
     
     console.log(`\n✅ Generated ${results.length} summary concepts:`);
     displayConcepts(results, 'Summary Concepts');
     console.log('✓ Added to graph\n');
+  } catch (error) {
+    console.error('❌ Error:', error instanceof Error ? error.message : error);
+  }
+}
+
+/**
+ * Operation: progressiveExpand
+ */
+async function runProgressiveExpand() {
+  console.log('\n⚙️  Progressive Expand Operation');
+  console.log('Generates next layer of concepts building on previous layers\n');
+  
+  const seedConcept = await selectConcept('Select seed concept for learning path');
+  if (!seedConcept) return;
+
+  // Get the latest concept from graph
+  const latestSeedConcept = getConcept(graph, seedConcept.name) || seedConcept;
+  
+  // Automatically determine previous layers based on layer numbers
+  const allConcepts = getAllConcepts(graph);
+  
+  // Calculate what the next layer number will be
+  const conceptsWithLayers = allConcepts.filter(c => c.layer !== undefined);
+  
+  const maxLayer = conceptsWithLayers.length > 0
+    ? Math.max(...conceptsWithLayers.map(c => c.layer!))
+    : 0;
+  const nextLayer = maxLayer + 1;
+  
+  // Find all concepts from previous layers (ONLY those with layer numbers)
+  const previousLayers = allConcepts.filter(c => {
+    // Only include concepts that have a layer number
+    if (c.layer === undefined) {
+      return false;
+    }
+    // Exclude the seed concept itself
+    if (c.name === latestSeedConcept.name) {
+      return false;
+    }
+    // Only include concepts from previous layers (lower layer numbers)
+    return c.layer < nextLayer;
+  });
+  
+  if (previousLayers.length > 0) {
+    console.log(`\n📚 Automatically found ${previousLayers.length} concept(s) from previous layers:`);
+    previousLayers.forEach((c, i) => {
+      console.log(`  ${i + 1}. ${c.name}${c.layer !== undefined ? ` (Layer ${c.layer})` : ''}`);
+    });
+    console.log('');
+  } else {
+    console.log('\n📚 No previous layers found - this will be the first layer\n');
+  }
+  
+  try {
+    console.log('⏳ Generating next layer...');
+    const results = await progressiveExpand(latestSeedConcept, previousLayers);
+    graph = addConceptsToGraph(graph, results);
+    
+    // Filter out updated parent concepts from display
+    const newConcepts = results.filter(r => !previousLayers.find(p => p.name === r.name));
+    const updatedParents = results.filter(r => previousLayers.find(p => p.name === r.name));
+    
+    console.log(`\n✅ Generated ${newConcepts.length} concepts for next layer:`);
+    newConcepts.forEach((concept, i) => {
+      console.log(`\n  ${i + 1}. ${concept.name} (Layer ${concept.layer || 'N/A'})`);
+      console.log(`     ${concept.description}`);
+      if (concept.parents.length > 0) {
+        console.log(`     Parents: ${concept.parents.join(', ')}`);
+      }
+    });
+    
+    if (updatedParents.length > 0) {
+      console.log(`\n✓ Updated ${updatedParents.length} parent concept(s) from previous layer`);
+    }
+    console.log('\n✓ Added to graph\n');
   } catch (error) {
     console.error('❌ Error:', error instanceof Error ? error.message : error);
   }
@@ -458,9 +565,9 @@ async function showMenu() {
   console.log('  4. ⬆️  Derive Parents - Generate prerequisites');
   console.log('  5. 🔍 Explore - Generate related concepts');
   console.log('  6. 🎯 Refocus - Update attention scores');
-  console.log('  7. ✓ Validate Links - Validate relationships');
-  console.log('  8. 🛤️  Trace Path - Generate learning path');
-  console.log('  9. 📝 Derive Summary - Generate layer summary');
+  console.log('  7. 🛤️  Trace Path - Generate learning path');
+  console.log('  8. 📝 Derive Summary - Generate layer summary');
+  console.log('  9. ⚙️  Progressive Expand - Generate next learning layer');
   console.log('\nUtilities:');
   console.log('  10. 🌱 Create Seed - Add a new concept');
   console.log('  11. 📊 Show Graph Stats - Display statistics');
@@ -506,13 +613,13 @@ async function runDemo() {
         await runRefocus();
         break;
       case '7':
-        await runValidateLinks();
-        break;
-      case '8':
         await runTracePath();
         break;
-      case '9':
+      case '8':
         await runDeriveSummary();
+        break;
+      case '9':
+        await runProgressiveExpand();
         break;
       case '10':
         await createSeed();

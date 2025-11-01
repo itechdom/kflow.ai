@@ -14,9 +14,9 @@ export { synthesize } from './synthesize';
 export { deriveParents } from './deriveParents';
 export { explore } from './explore';
 export { refocus } from './refocus';
-export { validateLinks } from './validateLinks';
 export { tracePath } from './tracePath';
 export { deriveSummary } from './deriveSummary';
+export { progressiveExpand } from './progressiveExpand';
 
 export * from '../types/concept';
 

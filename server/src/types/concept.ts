@@ -7,6 +7,7 @@ export interface Concept {
   description: string;
   parents: string[];      // Array of parent concept names
   children: string[];     // Array of child concept names
+  layer?: number;         // Optional layer number for progressive expansion
 }
 
 /**

@@ -1,7 +1,7 @@
 /**
  * Test Generation Script for Phase 1
  * 
- * Runs all 9 operations on multiple test topics and validates:
+ * Runs all 8 operations on multiple test topics and validates:
  * - Schema compliance
  * - Cross-topic consistency
  * - Merge logic
@@ -18,7 +18,6 @@ import {
   deriveParents,
   explore,
   refocus,
-  validateLinks,
   tracePath,
   deriveSummary,
 } from '../operations';
@@ -77,7 +76,7 @@ async function testOperation(
 
     // Validate schema
     const isValid = Array.isArray(result) && result.every(concept => {
-      if (operationName === 'refocus' || operationName === 'validateLinks') {
+      if (operationName === 'refocus') {
         return validateExtendedConcept(concept);
       }
       return validateConcept(concept);
@@ -116,7 +115,7 @@ async function testOperation(
  */
 async function runTests() {
   console.log('🚀 Starting Phase 1 Test Generation\n');
-  console.log(`Testing ${TEST_TOPICS.length} topics across 9 operations...\n`);
+  console.log(`Testing ${TEST_TOPICS.length} topics across 8 operations...\n`);
 
   // Test expand
   for (const topic of TEST_TOPICS) {
@@ -183,24 +182,6 @@ async function runTests() {
     } catch (error) {
       results.push({
         operation: 'refocus',
-        topic: topic.name,
-        success: false,
-        error: error instanceof Error ? error.message : 'Unknown error',
-      });
-    }
-  }
-
-  // Test validateLinks
-  for (const topic of TEST_TOPICS) {
-    try {
-      const expanded = await expand(topic);
-      if (expanded.length > 0) {
-        const result = await testOperation('validateLinks', validateLinks, expanded);
-        results.push(result);
-      }
-    } catch (error) {
-      results.push({
-        operation: 'validateLinks',
         topic: topic.name,
         success: false,
         error: error instanceof Error ? error.message : 'Unknown error',

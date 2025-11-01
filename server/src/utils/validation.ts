@@ -88,6 +88,7 @@ export function normalizeConcept(obj: any): Concept {
     description: obj.description || '',
     parents: Array.isArray(obj.parents) ? obj.parents.filter((p: any) => typeof p === 'string') : [],
     children: Array.isArray(obj.children) ? obj.children.filter((c: any) => typeof c === 'string') : [],
+    layer: typeof obj.layer === 'number' ? obj.layer : undefined,
   };
 }
 
